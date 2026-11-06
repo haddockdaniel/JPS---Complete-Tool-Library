@@ -1,0 +1,101 @@
+<UserControl x:Class="Jps.Tools.Tools.FeeSchedule.FeeScheduleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <UserControl.Resources>
+        <!-- The client list can hold thousands of entries. -->
+        <ItemsPanelTemplate x:Key="Virtual">
+            <VirtualizingStackPanel />
+        </ItemsPanelTemplate>
+    </UserControl.Resources>
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Choose the fee schedules" />
+                    <WrapPanel>
+                        <StackPanel Margin="0,0,24,0">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Change from" />
+                            <ComboBox x:Name="FromBox" MinWidth="320" MaxWidth="420" DisplayMemberPath="Display"
+                                      IsTextSearchEnabled="True" TextSearch.TextPath="Display" SelectionChanged="OnInputChanged" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Change to" />
+                            <ComboBox x:Name="ToBox" MinWidth="320" MaxWidth="420" DisplayMemberPath="Display"
+                                      IsTextSearchEnabled="True" TextSearch.TextPath="Display" SelectionChanged="OnInputChanged" />
+                        </StackPanel>
+                    </WrapPanel>
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Inactive fee schedules are listed under Change from so clients and matters can be moved off them. Only active schedules can be the new one." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Choose what to change" />
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton x:Name="BothRadio" GroupName="Scope" Content="Clients and matters" IsChecked="True"
+                                     Margin="0,0,24,0" Checked="OnInputChanged" />
+                        <RadioButton x:Name="ClientsRadio" GroupName="Scope" Content="Clients only" Margin="0,0,24,0" Checked="OnInputChanged" />
+                        <RadioButton x:Name="MattersRadio" GroupName="Scope" Content="Matters only" Checked="OnInputChanged" />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource FieldLabel}" Margin="0,14,0,6" Text="Which matters"
+                               IsEnabled="{Binding IsChecked, ElementName=ClientsRadio, Converter={StaticResource Invert}}" />
+                    <StackPanel x:Name="StatusPanel" Orientation="Horizontal"
+                                IsEnabled="{Binding IsChecked, ElementName=ClientsRadio, Converter={StaticResource Invert}}">
+                        <RadioButton x:Name="OpenRadio" GroupName="Status" Content="Open matters only" IsChecked="True"
+                                     Margin="0,0,24,0" Checked="OnInputChanged" />
+                        <RadioButton x:Name="ClosedRadio" GroupName="Status" Content="Closed matters only" Margin="0,0,24,0" Checked="OnInputChanged" />
+                        <RadioButton x:Name="AllRadio" GroupName="Status" Content="All matters" Checked="OnInputChanged" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="3  Narrow it down (optional)" />
+                    <WrapPanel>
+                        <StackPanel Margin="0,0,24,8">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Practice class" />
+                            <ComboBox x:Name="PracticeBox" MinWidth="260" MaxWidth="360" DisplayMemberPath="Display"
+                                      IsTextSearchEnabled="True" TextSearch.TextPath="Display" SelectionChanged="OnInputChanged" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,24,8">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Office" />
+                            <ComboBox x:Name="OfficeBox" MinWidth="260" MaxWidth="360" DisplayMemberPath="Display"
+                                      IsTextSearchEnabled="True" TextSearch.TextPath="Display" SelectionChanged="OnInputChanged" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,0,8">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Client" />
+                            <ComboBox x:Name="ClientBox" MinWidth="320" MaxWidth="460" DisplayMemberPath="Display"
+                                      IsTextSearchEnabled="True" TextSearch.TextPath="Display" ItemsPanel="{StaticResource Virtual}"
+                                      SelectionChanged="OnInputChanged" />
+                        </StackPanel>
+                    </WrapPanel>
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Filters apply to clients by the client's own practice class and office, and to matters by the matter's." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="4  Delete the old fee schedule (optional)" />
+                    <CheckBox x:Name="DeleteCheck" Content="Delete the old fee schedule once everything is moved off it"
+                              Checked="OnInputChanged" Unchecked="OnInputChanged" />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Runs in the same step as the change. It is refused, and nothing is changed, while any client or matter would be left on the old schedule or it is the firm's standard rate schedule. When it runs, time entries that used the old schedule (unbilled, billed, in batches) are changed to the new one and the old schedule's timekeeper, personnel type and task code rates are deleted; the pre-report says how many." />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="RunButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Change fee schedule" Icon="{ui:SymbolIcon ArrowSwap24}" Click="OnRun" />
+                <ui:Button x:Name="PreviewButton" DockPanel.Dock="Right" Margin="0,0,8,0" IsEnabled="False"
+                           Content="Preview report" Icon="{ui:SymbolIcon DocumentTable24}" Click="OnPreview" />
+                <TextBlock x:Name="WhyDisabled" DockPanel.Dock="Left" Style="{StaticResource Hint}" VerticalAlignment="Center"
+                           MaxWidth="520" Margin="0" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

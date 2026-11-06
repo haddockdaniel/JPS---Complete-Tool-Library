@@ -1,0 +1,34 @@
+<UserControl x:Class="Jps.Tools.Tools.DeleteZeroBatches.DeleteZeroBatchesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Choose the batch types" />
+                    <c:CheckList x:Name="TypeList" MaxWidth="520" HorizontalAlignment="Left" MinWidth="360" Height="330"
+                                 Placeholder="Search batch types" SelectionChanged="OnTypesChanged" />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Empty batches of the checked types are removed from the batch tree in Juris. The batches themselves are kept in Juris; they just no longer show in the tree." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Review and hide" />
+                    <TextBlock Style="{StaticResource Hint}" Margin="0"
+                               Text="A batch counts as empty when it has no entries and nothing else in Juris refers to it. Batches someone has open in Juris right now, and journal entry batches linked to an A/R posting, are left alone. You see the full list before anything changes." />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="HideButton" DockPanel.Dock="Right" Appearance="Primary"
+                           Content="Hide empty batches" Icon="{ui:SymbolIcon EyeOff24}" Click="OnHide" />
+                <ui:Button x:Name="PreviewButton" DockPanel.Dock="Right" Margin="0,0,8,0"
+                           Content="Preview batches" Icon="{ui:SymbolIcon DocumentTable24}" Click="OnPreview" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

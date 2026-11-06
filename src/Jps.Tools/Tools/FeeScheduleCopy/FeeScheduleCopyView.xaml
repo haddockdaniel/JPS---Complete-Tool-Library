@@ -1,0 +1,38 @@
+<UserControl x:Class="Jps.Tools.Tools.FeeScheduleCopy.FeeScheduleCopyView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Pick the fee schedule to copy" />
+                    <ComboBox x:Name="SourceBox" MaxWidth="520" HorizontalAlignment="Left" MinWidth="360"
+                              DisplayMemberPath="Display" SelectionChanged="OnInputChanged" />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Only active fee schedules are listed. Its timekeeper, personnel type and task code rates are copied exactly." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Name the new fee schedule" />
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="New code (up to 4 characters)" />
+                    <TextBox x:Name="CodeBox" MaxLength="4" Width="120" HorizontalAlignment="Left"
+                             CharacterCasing="Upper" TextChanged="OnInputChanged" />
+                    <TextBlock Style="{StaticResource FieldLabel}" Margin="0,12,0,6" Text="Description (up to 30 characters)" />
+                    <TextBox x:Name="DescBox" MaxLength="30" MaxWidth="520" MinWidth="360" HorizontalAlignment="Left"
+                             TextChanged="OnInputChanged" />
+                    <TextBlock x:Name="InputHint" Style="{StaticResource Hint}"
+                               Text="The code can't contain spaces or quote marks. The new fee schedule is created as active." />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="CopyButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Create fee schedule" Icon="{ui:SymbolIcon Copy24}" Click="OnCopy" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

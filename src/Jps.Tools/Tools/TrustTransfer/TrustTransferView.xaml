@@ -1,0 +1,69 @@
+<UserControl x:Class="Jps.Tools.Tools.TrustTransfer.TrustTransferView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Pick the trust banks" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Move balances FROM" />
+                            <ComboBox x:Name="FromBox" MinWidth="320" MaxWidth="420" DisplayMemberPath="Display" SelectionChanged="OnBankChanged" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Move balances TO" />
+                            <ComboBox x:Name="ToBox" MinWidth="320" MaxWidth="420" DisplayMemberPath="Display" SelectionChanged="OnBankChanged" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Only trust banks with ledger history can be moved from. Every matter's balance in the FROM bank moves to the TO bank." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Check the balances can be moved" />
+                    <TextBlock Style="{StaticResource Hint}" Margin="0,0,0,12"
+                               Text="The FROM bank must have no open or unposted vouchers, trust adjustments, prebill trust allocations, cash receipt allocations or journal entries, and no matter may have a negative balance." />
+                    <ui:Button x:Name="CheckButton" Content="Run checks" Icon="{ui:SymbolIcon ShieldTask24}" Click="OnCheck" />
+                    <ItemsControl x:Name="Results" Margin="0,12,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="0,3">
+                                    <ui:SymbolIcon Symbol="{Binding Icon}" Foreground="{Binding Brush}" Margin="0,0,8,0" />
+                                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap" MaxWidth="760" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="3  Create the trust adjustment batch" />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="The tool creates one unposted Trust Adjustment batch: for each matter, the balance out of the FROM bank and into the TO bank. Nothing is posted. Post the batch in Juris to update the matter ledgers and the GL." />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="TransferButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Create transfer batch" Icon="{ui:SymbolIcon ArrowSwap24}" Click="OnTransfer" />
+                <ui:Button x:Name="NegativesButton" DockPanel.Dock="Right" Margin="0,0,8,0" Visibility="Collapsed"
+                           Content="Negative balances" Icon="{ui:SymbolIcon DocumentTable24}" Click="OnShowNegatives" />
+                <ui:Button x:Name="IssuesButton" DockPanel.Dock="Right" Margin="0,0,8,0" Visibility="Collapsed"
+                           Content="Issues list" Icon="{ui:SymbolIcon DocumentTable24}" Click="OnShowIssues" />
+                <Grid />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

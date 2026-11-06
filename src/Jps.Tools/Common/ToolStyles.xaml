@@ -1,0 +1,61 @@
+<!-- Shared look for every tool page. Merged by the shell's App.xaml, so any tool view can use these keys. -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:c="clr-namespace:Jps.Tools.Common">
+
+    <!-- A numbered step card: "1  Choose what to change". -->
+    <!-- Glass card: theme card fill, edge lit from the top-left with a touch of LexisNexis red. -->
+    <LinearGradientBrush x:Key="ToolCardEdge" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#99E3051B" Offset="0" />
+        <GradientStop Color="#40FFFFFF" Offset="0.15" />
+        <GradientStop Color="#14FFFFFF" Offset="0.6" />
+        <GradientStop Color="#0AFFFFFF" Offset="1" />
+    </LinearGradientBrush>
+
+    <Style x:Key="ToolCard" TargetType="Border">
+        <Setter Property="Padding" Value="24,20,24,24" />
+        <Setter Property="Margin" Value="0,0,0,16" />
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="{StaticResource ToolCardEdge}" />
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+    </Style>
+
+    <Style x:Key="ToolCardTitle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI" />
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Margin" Value="0,0,0,14" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    </Style>
+
+    <Style x:Key="FieldLabel" TargetType="TextBlock">
+        <Setter Property="Margin" Value="0,0,0,6" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    </Style>
+
+    <Style x:Key="Hint" TargetType="TextBlock">
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Margin" Value="0,6,0,0" />
+        <Setter Property="FontSize" Value="13.5" />
+        <Setter Property="LineHeight" Value="20" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+    </Style>
+
+    <!-- Bottom action row: report buttons on the left, the change button on the right. -->
+    <Style x:Key="ActionBar" TargetType="DockPanel">
+        <Setter Property="Margin" Value="0,4,0,0" />
+        <Setter Property="LastChildFill" Value="False" />
+    </Style>
+
+    <!-- Short dates (11/06/2026) so pickers never truncate to "Friday, Novembe". -->
+    <Style TargetType="DatePicker" BasedOn="{StaticResource {x:Type DatePicker}}">
+        <Setter Property="SelectedDateFormat" Value="Short" />
+        <Setter Property="MinWidth" Value="150" />
+    </Style>
+
+    <c:Visible x:Key="Visible" />
+    <c:Invert x:Key="Invert" />
+</ResourceDictionary>

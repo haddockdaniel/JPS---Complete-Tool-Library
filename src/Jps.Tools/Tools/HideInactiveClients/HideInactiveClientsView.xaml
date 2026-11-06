@@ -1,0 +1,35 @@
+<UserControl x:Class="Jps.Tools.Tools.HideInactiveClients.HideInactiveClientsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Choose which clients to hide" />
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Clients opened on or before" />
+                    <DatePicker x:Name="OpenedPicker" Width="200" HorizontalAlignment="Left" SelectedDateChanged="OnInputChanged" />
+                    <TextBlock Style="{StaticResource FieldLabel}" Margin="0,12,0,6" Text="Originating timekeeper" />
+                    <ComboBox x:Name="OriginatorBox" MaxWidth="520" MinWidth="360" HorizontalAlignment="Left"
+                              DisplayMemberPath="Display" SelectionChanged="OnInputChanged" />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Only clients that have matters, none of them Open or Final Bill Sent, are hidden. Clients with no matters at all are left alone." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Review and hide" />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="You'll see the list of clients first. Hiding removes the client from the Clients folder of the Juris explorer only; no client or matter data changes. Clients that have items filed under their explorer entry are kept. Use Open in Excel on the list if you want to keep a copy." />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="HideButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Review and hide clients" Icon="{ui:SymbolIcon EyeOff24}" Click="OnHide" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

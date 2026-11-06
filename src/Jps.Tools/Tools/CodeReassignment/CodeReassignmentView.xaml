@@ -1,0 +1,39 @@
+<UserControl x:Class="Jps.Tools.Tools.CodeReassignment.CodeReassignmentView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock x:Name="ChooseTitle" Style="{StaticResource ToolCardTitle}" Text="1  Choose the codes" />
+                    <TextBlock x:Name="FromLabel" Style="{StaticResource FieldLabel}" Text="Code to change" />
+                    <ComboBox x:Name="FromBox" MaxWidth="520" MinWidth="360" HorizontalAlignment="Left"
+                              DisplayMemberPath="Display" IsTextSearchEnabled="True" SelectionChanged="OnSelectionChanged" />
+                    <TextBlock x:Name="ToLabel" Style="{StaticResource FieldLabel}" Margin="0,14,0,6" Text="New code" />
+                    <ComboBox x:Name="ToBox" MaxWidth="520" MinWidth="360" HorizontalAlignment="Left"
+                              DisplayMemberPath="Display" IsTextSearchEnabled="True" SelectionChanged="OnSelectionChanged" />
+                    <TextBlock x:Name="ChooseHint" Style="{StaticResource Hint}" Margin="0,10,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Choose what happens to the old code" />
+                    <CheckBox x:Name="DeleteBox" Content="Delete the From code after reassignment" />
+                    <TextBlock x:Name="DeleteHint" Style="{StaticResource Hint}" />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="RunButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Reassign" Icon="{ui:SymbolIcon ArrowSwap24}" Click="OnRun" />
+                <ui:Button x:Name="ChangesButton" DockPanel.Dock="Right" Margin="0,0,8,0" IsEnabled="False"
+                           Content="What changed" Icon="{ui:SymbolIcon Table24}" Click="OnShowChanges" />
+                <ui:Button x:Name="ReportButton" DockPanel.Dock="Right" Margin="0,0,8,0" Visibility="Collapsed"
+                           Icon="{ui:SymbolIcon DocumentTable24}" Click="OnReport" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

@@ -1,0 +1,66 @@
+<UserControl x:Class="Jps.Tools.Tools.UndoBankRec.UndoBankRecView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Pick the bank account" />
+                    <ComboBox x:Name="BankBox" MaxWidth="520" HorizontalAlignment="Left" MinWidth="360"
+                              DisplayMemberPath="Display" TextSearch.TextPath="Display" SelectionChanged="OnBankChanged" />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Only the bank's most recent recorded reconciliation can be undone. Run the tool again to step back further." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Check what will be undone" />
+                    <TextBlock x:Name="NoneText" Style="{StaticResource Hint}" Margin="0" Text="Pick a bank account to see its last reconciliation." />
+                    <Grid x:Name="Details" Visibility="Collapsed">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" MinWidth="260" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="Statement date" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="StmtDateText" FontWeight="SemiBold" />
+                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="Recorded on" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="RecordedText" />
+                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="Beginning balance" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" x:Name="OpenBalText" />
+                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="Ending balance" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" x:Name="EndBalText" FontWeight="SemiBold" />
+                        <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="Items to un-clear" />
+                        <TextBlock Grid.Row="4" Grid.Column="1" x:Name="ItemsText" TextWrapping="Wrap" />
+                        <TextBlock Grid.Row="5" Style="{StaticResource FieldLabel}" Text="Bank's last reconciliation afterwards" />
+                        <TextBlock Grid.Row="5" Grid.Column="1" x:Name="AfterText" TextWrapping="Wrap" />
+                        <TextBlock Grid.Row="6" Style="{StaticResource FieldLabel}" Text="Reconciliation in progress" />
+                        <TextBlock Grid.Row="6" Grid.Column="1" x:Name="InProgressText" TextWrapping="Wrap" />
+                    </Grid>
+                    <ui:InfoBar x:Name="ItemsWarning" Margin="0,12,0,0" Severity="Error" IsClosable="False" IsOpen="False"
+                                Visibility="Collapsed" Title="Cleared items are missing" />
+                    <ui:InfoBar x:Name="AdjustmentWarning" Margin="0,12,0,0" Severity="Informational" IsClosable="False" IsOpen="False"
+                                Visibility="Collapsed" Title="Adjustment entries stay posted" />
+                    <ui:InfoBar x:Name="MismatchWarning" Margin="0,12,0,0" Severity="Warning" IsClosable="False" IsOpen="False"
+                                Visibility="Collapsed" Title="Prior statement doesn't match" />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="UndoButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Undo reconciliation" Icon="{ui:SymbolIcon ArrowUndo24}" Click="OnUndo" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

@@ -1,0 +1,4 @@
+DataDynamics.ActiveReports.ActiveReport, ActiveReports6, Version=6.2.3681.0, Culture=neutral, PublicKeyToken=cc4967777c49a3ff
+DataDynamics.ActiveReports.Export.Pdf.PdfExport, ActiveReports.PdfExport, Version=6.2.3681.0, Culture=neutral, PublicKeyToken=cc4967777c49a3ff 
+DataDynamics.ActiveReports.Viewer.Viewer, ActiveReports.Viewer6, Version=6.2.3681.0, Culture=neutral, PublicKeyToken=cc4967777c49a3ff
+DataDynamics.ActiveReports.Document.Document, ActiveReports.Document, Version=6.2.3681.0, Culture=neutral, PublicKeyToken=cc4967777c49a3ff

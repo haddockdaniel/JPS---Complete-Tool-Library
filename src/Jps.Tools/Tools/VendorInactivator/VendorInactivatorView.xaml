@@ -1,0 +1,63 @@
+<UserControl x:Class="Jps.Tools.Tools.VendorInactivator.VendorInactivatorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Choose what to do" />
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton x:Name="ModeInactivate" Content="Inactivate vendors" IsChecked="True" GroupName="Mode" Checked="OnModeChanged" />
+                        <RadioButton x:Name="Mode1099" Content="Set which vendors receive a 1099" Margin="24,0,0,0" GroupName="Mode" Checked="OnModeChanged" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Inactivate -->
+            <Border x:Name="InactivatePanel" Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Choose the vendors to inactivate" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <RadioButton x:Name="ByDate" Content="By date of last activity" IsChecked="True" GroupName="How" Checked="OnModeChanged" />
+                        <RadioButton x:Name="ByName" Content="Pick vendors from a list" Margin="24,0,0,0" GroupName="How" Checked="OnModeChanged" />
+                    </StackPanel>
+
+                    <StackPanel x:Name="DatePanel">
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="Last activity on or before" />
+                        <DatePicker x:Name="CutOff" Width="200" HorizontalAlignment="Left" SelectedDateChanged="OnInputChanged" />
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Active vendors whose last voucher invoice date or last check date is on or before this date are inactivated. Vendors with unpaid vouchers are skipped and listed afterwards." />
+                    </StackPanel>
+
+                    <StackPanel x:Name="NamePanel" Visibility="Collapsed">
+                        <c:CheckList x:Name="VendorList" Height="320" Placeholder="Search vendors" />
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Only active vendors are listed. Vendors with unpaid vouchers are skipped and listed afterwards." />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 1099 -->
+            <Border x:Name="Panel1099" Style="{StaticResource ToolCard}" Visibility="Collapsed">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Choose the vendor groups and 1099 type" />
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Vendor groups" />
+                    <c:CheckList x:Name="GroupList" Height="260" Placeholder="Search vendor groups" />
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="1099 type to give them" Margin="0,12,0,6" />
+                    <ComboBox x:Name="TypeBox" Width="320" HorizontalAlignment="Left" DisplayMemberPath="Display" SelectionChanged="OnInputChanged" />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Every vendor in the chosen groups (active or not) is set to receive a 1099 of this type." />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="RunButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Inactivate vendors" Icon="{ui:SymbolIcon PersonDelete24}" Click="OnRun" />
+                <ui:Button x:Name="PreviewButton" DockPanel.Dock="Right" Margin="0,0,8,0" IsEnabled="False"
+                           Content="Preview" Icon="{ui:SymbolIcon DocumentTable24}" Click="OnPreview" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

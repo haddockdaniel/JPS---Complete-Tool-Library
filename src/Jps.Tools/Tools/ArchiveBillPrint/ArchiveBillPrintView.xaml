@@ -1,0 +1,103 @@
+<UserControl x:Class="Jps.Tools.Tools.ArchiveBillPrint.ArchiveBillPrintView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <Grid>
+        <c:ToolFrame x:Name="Frame">
+            <StackPanel>
+                <Border Style="{StaticResource ToolCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Choose where to save the PDF files" />
+                        <DockPanel MaxWidth="720" HorizontalAlignment="Left">
+                            <ui:Button DockPanel.Dock="Right" Margin="8,0,0,0" Content="Browse…" Icon="{ui:SymbolIcon FolderOpen24}" Click="OnBrowse" />
+                            <ui:TextBox x:Name="FolderBox" MinWidth="440" PlaceholderText="Folder for the PDF files" TextChanged="OnInputChanged" />
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="The folder is created if it doesn't exist. Invoices whose PDF is already in this folder are skipped, so you can run the tool again to carry on where it stopped." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource ToolCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Choose the invoices to print" />
+
+                        <CheckBox x:Name="ByDate" Content="Invoices dated" Checked="OnCriteriaChanged" Unchecked="OnCriteriaChanged" />
+                        <StackPanel Orientation="Horizontal" Margin="28,6,0,12" IsEnabled="{Binding IsChecked, ElementName=ByDate}">
+                            <DatePicker x:Name="DateFrom" Width="150" SelectedDateChanged="OnInputChanged" />
+                            <TextBlock Text="to" VerticalAlignment="Center" Margin="10,0" />
+                            <DatePicker x:Name="DateTo" Width="150" SelectedDateChanged="OnInputChanged" />
+                        </StackPanel>
+
+                        <CheckBox x:Name="ByNumber" Content="Invoice numbers" Checked="OnCriteriaChanged" Unchecked="OnCriteriaChanged" />
+                        <StackPanel Orientation="Horizontal" Margin="28,6,0,12" IsEnabled="{Binding IsChecked, ElementName=ByNumber}">
+                            <ui:TextBox x:Name="NumberFrom" Width="150" PlaceholderText="From" TextChanged="OnInputChanged" />
+                            <TextBlock Text="to" VerticalAlignment="Center" Margin="10,0" />
+                            <ui:TextBox x:Name="NumberTo" Width="150" PlaceholderText="To" TextChanged="OnInputChanged" />
+                        </StackPanel>
+
+                        <CheckBox x:Name="ByClient" Content="Invoices for one client" Checked="OnCriteriaChanged" Unchecked="OnCriteriaChanged" />
+                        <StackPanel Margin="28,6,0,12" IsEnabled="{Binding IsChecked, ElementName=ByClient}">
+                            <ComboBox x:Name="ClientBox" MinWidth="360" MaxWidth="520" HorizontalAlignment="Left"
+                                      DisplayMemberPath="Display" IsTextSearchEnabled="True" TextSearch.TextPath="Display"
+                                      SelectionChanged="OnClientChanged" />
+                            <CheckBox x:Name="ByMatter" Content="Only one of the client's matters" Margin="0,8,0,0"
+                                      Checked="OnMatterToggled" Unchecked="OnMatterToggled" />
+                            <ComboBox x:Name="MatterBox" MinWidth="360" MaxWidth="520" HorizontalAlignment="Left" Margin="0,6,0,0"
+                                      DisplayMemberPath="Display" IsTextSearchEnabled="True" TextSearch.TextPath="Display"
+                                      IsEnabled="{Binding IsChecked, ElementName=ByMatter}" SelectionChanged="OnInputChanged" />
+                        </StackPanel>
+
+                        <CheckBox x:Name="ByBalance" Content="Only invoices that still have a balance due" Margin="0,0,0,12"
+                                  Checked="OnCriteriaChanged" Unchecked="OnCriteriaChanged" />
+
+                        <CheckBox x:Name="ByCsv" Content="Invoice numbers from a file" Checked="OnCriteriaChanged" Unchecked="OnCriteriaChanged" />
+                        <StackPanel Orientation="Horizontal" Margin="28,6,0,0" IsEnabled="{Binding IsChecked, ElementName=ByCsv}">
+                            <ui:Button Content="Choose file…" Icon="{ui:SymbolIcon DocumentArrowUp20}" Click="OnPickCsv" />
+                            <TextBlock x:Name="CsvSummary" VerticalAlignment="Center" Margin="12,0,0,0" Text="No file chosen" />
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource Hint}" Margin="28,4,0,0"
+                                   Text="A .csv or .txt file. Every whole number in it is read as an invoice number; anything else (such as a header) is ignored." />
+
+                        <StackPanel x:Name="MatchPanel" Margin="0,16,0,0" Visibility="Collapsed">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="With more than one choice ticked, print invoices that match" />
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="MatchAll" Content="All of them" IsChecked="True" GroupName="Match" />
+                                <RadioButton x:Name="MatchAny" Content="Any of them" Margin="24,0,0,0" GroupName="Match" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource ToolCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource ToolCardTitle}" Text="3  Name the files" />
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="File name pattern" />
+                        <ui:TextBox x:Name="NamingBox" MinWidth="440" MaxWidth="720" HorizontalAlignment="Left" TextChanged="OnInputChanged" />
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Use these fields, separated by dashes or spaces, and end with .pdf:  [Client Code] [Matter Code] [Client Name] [Matter Name] [Invoice Number] [Invoice Date] [Bill-To Nickname] [Print Date] [Print Date and Time]" />
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="[Bill-To Nickname] saves one copy for each bill-to address nickname on the matter's bill copies. Characters Windows doesn't allow in file names, and % * / \ # @, are removed automatically. Patterns using the older field names ([ClientNum], [MatterNum], [BillNum], [BillDate], [BilAdrNick], [NowDate], [NowTime] and so on) still work." />
+                        <CheckBox x:Name="Attachments" Content="Also save expense attachments" Margin="0,12,0,0" />
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Each attachment is saved next to its invoice, named like the invoice file followed by a dash and the attachment's own file name." />
+                    </StackPanel>
+                </Border>
+
+                <DockPanel Style="{StaticResource ActionBar}">
+                    <ui:Button x:Name="PrintButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                               Content="Print to PDF" Icon="{ui:SymbolIcon Print24}" Click="OnPrint" />
+                    <ui:Button x:Name="ProblemsButton" DockPanel.Dock="Right" Margin="0,0,8,0" IsEnabled="False"
+                               Content="Show problems" Icon="{ui:SymbolIcon DocumentError24}" Click="OnShowProblems" />
+                    <ui:Button DockPanel.Dock="Right" Margin="0,0,8,0"
+                               Content="Open folder" Icon="{ui:SymbolIcon FolderOpen24}" Click="OnOpenFolder" />
+                </DockPanel>
+            </StackPanel>
+        </c:ToolFrame>
+
+        <!-- Sits on top of the busy overlay (ToolFrame has no cancel of its own); shown only while invoices are printing. -->
+        <ui:Button x:Name="CancelButton" Content="Stop after this invoice" Icon="{ui:SymbolIcon Stop24}"
+                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,170,0,0"
+                   Visibility="Collapsed" Click="OnCancel" />
+    </Grid>
+</UserControl>

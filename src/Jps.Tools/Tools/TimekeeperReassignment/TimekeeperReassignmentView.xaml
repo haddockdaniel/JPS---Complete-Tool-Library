@@ -1,0 +1,56 @@
+<UserControl x:Class="Jps.Tools.Tools.TimekeeperReassignment.TimekeeperReassignmentView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Choose the timekeepers" />
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Move assignments away from" />
+                    <ComboBox x:Name="FromBox" MaxWidth="520" MinWidth="360" HorizontalAlignment="Left"
+                              DisplayMemberPath="Display" SelectionChanged="OnInputChanged" />
+                    <TextBlock Style="{StaticResource FieldLabel}" Margin="0,12,0,6" Text="Give them to" />
+                    <ComboBox x:Name="ToBox" MaxWidth="520" MinWidth="360" HorizontalAlignment="Left"
+                              DisplayMemberPath="Display" SelectionChanged="OnInputChanged" />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="The first list shows everyone who is a billing, originating or responsible timekeeper on any client or matter, including timekeepers who have already been made inactive." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Choose what to change" />
+                    <WrapPanel>
+                        <StackPanel Margin="0,0,48,0">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Which timekeeper roles" />
+                            <RadioButton x:Name="RoleAll" GroupName="Role" IsChecked="True" Content="Billing, originating and responsible" Checked="OnInputChanged" />
+                            <RadioButton x:Name="RoleBilling" GroupName="Role" Content="Billing only" Checked="OnInputChanged" />
+                            <RadioButton x:Name="RoleOriginating" GroupName="Role" Content="Originating only" Checked="OnInputChanged" />
+                            <RadioButton x:Name="RoleResponsible" GroupName="Role" Content="Responsible only" Checked="OnInputChanged" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="On which records" />
+                            <RadioButton x:Name="ScopeBoth" GroupName="Scope" IsChecked="True" Content="Clients and matters" Checked="OnInputChanged" />
+                            <RadioButton x:Name="ScopeClients" GroupName="Scope" Content="Clients only" Checked="OnInputChanged" />
+                            <RadioButton x:Name="ScopeMatters" GroupName="Scope" Content="Matters only" Checked="OnInputChanged" />
+                        </StackPanel>
+                    </WrapPanel>
+                    <CheckBox x:Name="NoteCardBox" Margin="0,12,0,0" Content="Add a note card to each client and matter that changes" />
+                    <TextBlock Style="{StaticResource Hint}" Margin="0,8,0,0"
+                               Text="Closed matters are changed too. A matter's billing timekeeper is stored on its bill-to, so every matter sharing that bill-to changes together. Where a client or matter already has the new timekeeper as originator or responsible, the two shares are combined so the total stays at 100%." />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="RunButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Reassign timekeeper" Icon="{ui:SymbolIcon PersonSwap24}" Click="OnRun" />
+                <ui:Button x:Name="PostReportButton" DockPanel.Dock="Right" Margin="0,0,8,0" IsEnabled="False"
+                           Content="What changed" Icon="{ui:SymbolIcon DocumentCheckmark24}" Click="OnPostReport" />
+                <ui:Button x:Name="PreReportButton" DockPanel.Dock="Right" Margin="0,0,8,0" IsEnabled="False"
+                           Content="Preview" Icon="{ui:SymbolIcon DocumentSearch24}" Click="OnPreReport" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

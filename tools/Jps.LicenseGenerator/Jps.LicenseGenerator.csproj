@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Internal JPS tool. Never ship this or the private key to firms. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>JpsLicense</AssemblyName>
+    <RootNamespace>Jps.LicenseGenerator</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Jps.Core\Jps.Core.csproj" />
+  </ItemGroup>
+
+</Project>

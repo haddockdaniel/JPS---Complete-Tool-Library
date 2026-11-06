@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Every JPS tool, in one assembly. Each tool is still licensed separately (by its catalog id);
+       shared UI and helpers live in Common\ so tools stay small. -->
+  <PropertyGroup>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>Jps.Tools</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WPF-UI" Version="3.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Jps.Core\Jps.Core.csproj" />
+    <Reference Include="System.Data" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+
+  <!-- Archive Bill Bulk Print renders through Juris's server library and the ActiveReports 6 runtime the original tool shipped.
+       Not copied from here: Jps.Core already ships every lib\Juris DLL next to the exe. -->
+  <ItemGroup>
+    <Reference Include="JurisSVR21"><HintPath>$(JurisLib)JurisSVR21.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="JurisDBO21"><HintPath>$(JurisLib)JurisDBO21.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Gizmox.Extensions"><HintPath>$(JurisLib)Gizmox.Extensions.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="ActiveReports6"><HintPath>$(JurisLib)ActiveReports6.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="ActiveReports.Document"><HintPath>$(JurisLib)ActiveReports.Document.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="ActiveReports.PdfExport"><HintPath>$(JurisLib)ActiveReports.PdfExport.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+
+</Project>

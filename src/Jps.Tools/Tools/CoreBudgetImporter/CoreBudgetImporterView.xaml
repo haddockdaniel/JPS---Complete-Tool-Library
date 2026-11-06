@@ -1,0 +1,76 @@
+<UserControl x:Class="Jps.Tools.Tools.CoreBudgetImporter.CoreBudgetImporterView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Choose the budget spreadsheet" />
+                    <StackPanel Orientation="Horizontal">
+                        <ui:Button x:Name="ChooseButton" Content="Choose file…" Icon="{ui:SymbolIcon FolderOpen24}" Click="OnChooseFile" />
+                        <ui:Button x:Name="ReloadButton" Content="Check again" Margin="8,0,0,0" IsEnabled="False"
+                                   Icon="{ui:SymbolIcon ArrowSync24}" Click="OnReload" />
+                    </StackPanel>
+                    <TextBlock x:Name="FileText" Margin="0,10,0,0" TextWrapping="Wrap" Text="No file chosen yet." />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Use the template: one row per budget line, with the Client Code, Matter Code, Fee or Expense, the codes the line is for, its Budget Phase and the budgeted hours and amount. A blank Task Code, Activity Code, Timekeeper ID, Personnel Type or Expense Code means the line covers any value. Every matter in the file has its WHOLE fee and expense budget replaced by the rows in the file; matters not in the file are not touched." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Matter budget settings" />
+                    <TextBlock Style="{StaticResource Hint}" Margin="0,0,0,12"
+                               Text="These apply to every matter in the file. Budgets are always switched on for each matter and its client. When time or an expense posts, Juris adds it to a budget line in the entry's own Budget Phase: the line whose Task Code, Activity Code, Timekeeper and Personnel Type (for expenses: Task Code and Expense Code) fit the entry best, where a blank code fits anything. Work that no line fits goes to a catch-all line that Juris adds automatically." />
+
+                    <TextBlock Style="{StaticResource FieldLabel}" FontWeight="SemiBold" Text="Budget phase for rows that leave Budget Phase blank" />
+                    <StackPanel Orientation="Horizontal">
+                        <TextBox x:Name="DefaultPhaseBox" Width="90" Text="0" MaxLength="3" TextChanged="OnSettingChanged" />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="A whole number from 0 to 999. Files made from the older template have no Budget Phase column, so all of their lines get this phase." />
+
+                    <TextBlock Style="{StaticResource FieldLabel}" FontWeight="SemiBold" Margin="0,16,0,6" Text="Current budget phase of each matter" />
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton x:Name="PhaseKeep" Content="Keep each matter's current phase" IsChecked="True" GroupName="CurPhase" Margin="0,0,24,0" Checked="OnSettingChanged" />
+                        <RadioButton x:Name="PhaseSet" Content="Set it to" GroupName="CurPhase" VerticalAlignment="Center" Checked="OnSettingChanged" />
+                        <TextBox x:Name="CurrentPhaseBox" Width="90" Margin="8,0,0,0" Text="0" IsEnabled="False" MaxLength="3" TextChanged="OnSettingChanged" />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="New time and expense entries for the matter start in this phase (the person entering them can pick another). A matter whose budgets are switched off now has no current phase, so with Keep its phase becomes 0." />
+                    <TextBlock x:Name="PhaseNote" Style="{StaticResource Hint}" Visibility="Collapsed" />
+
+                    <TextBlock Style="{StaticResource FieldLabel}" FontWeight="SemiBold" Margin="0,16,0,6" Text="Require phase on transactions" />
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton x:Name="RequireKeep" Content="Keep each matter's setting" IsChecked="True" GroupName="Require" Margin="0,0,24,0" Checked="OnSettingChanged" />
+                        <RadioButton x:Name="RequireYes" Content="Yes" GroupName="Require" Margin="0,0,24,0" Checked="OnSettingChanged" />
+                        <RadioButton x:Name="RequireNo" Content="No" GroupName="Require" Checked="OnSettingChanged" />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Yes: Juris accepts a time entry only in a Budget Phase that has a fee line, and an expense entry only in a phase that has an expense line. So when this ends up Yes for a matter, every phase in its new budget, and its current phase, must have at least one Fee row and one Expense row (blank codes and a 0 amount are fine), or the file is not imported." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="3  Review and import" />
+                    <TextBlock x:Name="SummaryText" TextWrapping="Wrap" Text="Choose a file to check it against Juris." />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Every row is checked before anything changes. If anything has a problem nothing is imported: fix the file or the settings, save the file and click Check again. Actual hours and amounts already posted to the current budget lines are kept: they move to the new line that the same work would post to. If no new line would take them, the import stops and lists those lines." />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="ImportButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Import budgets" Icon="{ui:SymbolIcon ArrowImport24}" Click="OnImport" />
+                <ui:Button x:Name="ProblemsButton" DockPanel.Dock="Right" Margin="0,0,8,0" Visibility="Collapsed"
+                           Content="Problems" Icon="{ui:SymbolIcon DocumentTable24}" Click="OnShowProblems" />
+                <ui:Button x:Name="FileButton" DockPanel.Dock="Right" Margin="0,0,8,0" Visibility="Collapsed"
+                           Content="File contents" Icon="{ui:SymbolIcon DocumentTable24}" Click="OnShowFile" />
+                <Grid />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

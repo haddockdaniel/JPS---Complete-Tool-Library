@@ -1,0 +1,81 @@
+<UserControl x:Class="Jps.Tools.Tools.SplitMatterCloser.SplitMatterCloserView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Choose how to find split matters" />
+                    <RadioButton x:Name="ByClient" GroupName="Mode" Content="By client" IsChecked="True" Checked="OnInputChanged" Margin="0,0,0,4" />
+                    <RadioButton x:Name="ByTimekeeper" GroupName="Mode" Content="By billing timekeeper" Checked="OnInputChanged" Margin="0,0,0,4" />
+                    <RadioButton x:Name="ByLastBill" GroupName="Mode" Content="By last bill date" Checked="OnInputChanged" />
+                    <TextBlock Style="{StaticResource Hint}" Margin="0,8,0,0"
+                               Text="A split family is a parent matter and the matters it splits its billing to. A family is picked up when the parent or any of its children matches." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Narrow it down" />
+
+                    <StackPanel x:Name="ClientPanel">
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="Client" />
+                        <ComboBox x:Name="ClientBox" MaxWidth="520" HorizontalAlignment="Left" MinWidth="360"
+                                  DisplayMemberPath="Display" TextSearch.TextPath="Display" SelectionChanged="OnClientChanged" />
+                        <RadioButton x:Name="AllMatters" GroupName="Scope" Content="Every split matter for this client" IsChecked="True"
+                                     Checked="OnInputChanged" Margin="0,12,0,4" />
+                        <RadioButton x:Name="PickMatters" GroupName="Scope" Content="Only the matters I pick" Checked="OnInputChanged" />
+                        <c:CheckList x:Name="MatterList" Height="260" MaxWidth="640" HorizontalAlignment="Stretch" Margin="0,8,0,0"
+                                     Placeholder="Search matters" SelectionChanged="OnMattersChanged" Visibility="Collapsed" />
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Only clients and matters that are in a split (as parent or child) are listed. Picking any matter brings in its whole split family." />
+                    </StackPanel>
+
+                    <StackPanel x:Name="TimekeeperPanel" Visibility="Collapsed">
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="Billing timekeeper" />
+                        <ComboBox x:Name="TimekeeperBox" MaxWidth="520" HorizontalAlignment="Left" MinWidth="360"
+                                  DisplayMemberPath="Display" TextSearch.TextPath="Display" SelectionChanged="OnInputChanged" />
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <CheckBox x:Name="OpenedCheck" Content="Only matters opened on or before" VerticalAlignment="Center"
+                                      Checked="OnInputChanged" Unchecked="OnInputChanged" />
+                            <DatePicker x:Name="OpenedDate" Width="160" Margin="12,0,0,0"
+                                        IsEnabled="{Binding IsChecked, ElementName=OpenedCheck}" SelectedDateChanged="OnInputChanged" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel x:Name="LastBillPanel" Visibility="Collapsed">
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="Matters whose last bill was on or before" />
+                        <DatePicker x:Name="LastBillDate" Width="160" HorizontalAlignment="Left" SelectedDateChanged="OnInputChanged" />
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <CheckBox x:Name="NeverBilledCheck" Content="Also include matters never billed that were opened before"
+                                      VerticalAlignment="Center" Checked="OnInputChanged" Unchecked="OnInputChanged" />
+                            <DatePicker x:Name="NeverBilledDate" Width="160" Margin="12,0,0,0"
+                                        IsEnabled="{Binding IsChecked, ElementName=NeverBilledCheck}" SelectedDateChanged="OnInputChanged" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="3  Review and close" />
+                    <TextBlock Style="{StaticResource Hint}" Margin="0,0,0,6"
+                               Text="You'll see every split family found before anything changes." />
+                    <TextBlock Style="{StaticResource Hint}" Margin="0,0,0,6"
+                               Text="A family is closed only if EVERY matter in it (parent and children) passes the same close rules as Matter Closer: no prepaid balance, no unbilled time or expense entries, no unposted time, expenses, vouchers, cash receipts or trust adjustments, no open vouchers, bills or A/R, no trust balance in any bank and no open prebills, and isn't part of another split. Otherwise nothing in that family is changed and it's listed afterwards with the reasons." />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="For a closed family: every matter gets the status Closed, the lock Disallow time and expenses and today's close date, each gets a matter note recording the removed split, and the split billing is removed." />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="CloseButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Close split matters" Icon="{ui:SymbolIcon LockClosed24}" Click="OnClose" />
+                <ui:Button x:Name="NotClosedButton" DockPanel.Dock="Right" Margin="0,0,8,0" IsEnabled="False"
+                           Content="Matters not closed" Icon="{ui:SymbolIcon DocumentTable24}" Click="OnShowNotClosed" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

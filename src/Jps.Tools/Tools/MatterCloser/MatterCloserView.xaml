@@ -1,0 +1,102 @@
+<UserControl x:Class="Jps.Tools.Tools.MatterCloser.MatterCloserView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Choose how to pick the matters" />
+                    <RadioButton x:Name="CriteriaMode" GroupName="Mode" IsChecked="True" Content="Close by criteria (no activity, timekeeper, client, practice class)" Checked="OnModeChanged" />
+                    <RadioButton x:Name="SheetMode" GroupName="Mode" Margin="0,6,0,0" Content="Close from a spreadsheet of client and matter codes" Checked="OnModeChanged" />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Only matters free of all unposted or outstanding items are closed: no unbilled time or expenses (WIP), unposted time or expenses, open or unposted vouchers, open bills or A/R, unposted cash receipts, prepaid or trust balance, open prebills, and no split billing. Closed matters get the status Closed and the lock Disallow time and expenses." />
+                </StackPanel>
+            </Border>
+
+            <!-- Criteria mode -->
+            <StackPanel x:Name="CriteriaPanel">
+                <Border Style="{StaticResource ToolCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Which matters count as inactive" />
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton x:Name="DaysMode" GroupName="Activity" IsChecked="True" VerticalAlignment="Center" MinWidth="250"
+                                         Content="No activity for more than" Checked="OnInputChanged" />
+                            <ComboBox x:Name="DaysBox" Width="110" Margin="8,0" SelectionChanged="OnInputChanged"
+                                      IsEnabled="{Binding IsChecked, ElementName=DaysMode}" />
+                            <TextBlock Text="days" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <RadioButton x:Name="SinceMode" GroupName="Activity" VerticalAlignment="Center" MinWidth="250"
+                                         Content="No activity on or after" Checked="OnInputChanged" />
+                            <DatePicker x:Name="SinceDate" Width="160" Margin="8,0" SelectedDateChanged="OnInputChanged"
+                                        IsEnabled="{Binding IsChecked, ElementName=SinceMode}" />
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Activity means work, expenses, bills, payments and the open date. Only Open and Final Bill Sent matters are considered." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource ToolCard}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource ToolCardTitle}" Text="3  Narrow it down (optional)" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="24" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Style="{StaticResource FieldLabel}" Text="Only matters for billing timekeeper" />
+                                <ComboBox x:Name="BillTkprBox" DisplayMemberPath="Display" />
+                                <TextBlock Style="{StaticResource FieldLabel}" Margin="0,10,0,6" Text="Only matters for client" />
+                                <ComboBox x:Name="ClientBox" DisplayMemberPath="Display" />
+                                <TextBlock Style="{StaticResource FieldLabel}" Margin="0,10,0,6" Text="Only matters in practice class" />
+                                <ComboBox x:Name="PracticeClassBox" DisplayMemberPath="Display" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Style="{StaticResource FieldLabel}" Text="Never close matters for billing timekeeper" />
+                                <ComboBox x:Name="ExceptBillTkprBox" DisplayMemberPath="Display" />
+                                <TextBlock Style="{StaticResource FieldLabel}" Margin="0,10,0,6" Text="Never close matters for client" />
+                                <ComboBox x:Name="ExceptClientBox" DisplayMemberPath="Display" />
+                                <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                    <CheckBox x:Name="OpenedLimit" VerticalAlignment="Center" Content="Never close matters opened after"
+                                              Checked="OnInputChanged" Unchecked="OnInputChanged" />
+                                    <DatePicker x:Name="OpenedDate" Width="160" Margin="8,0,0,0" SelectedDateChanged="OnInputChanged"
+                                                IsEnabled="{Binding IsChecked, ElementName=OpenedLimit}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Spreadsheet mode -->
+            <Border x:Name="SheetPanel" Style="{StaticResource ToolCard}" Visibility="Collapsed">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Choose the spreadsheet" />
+                    <TextBlock Style="{StaticResource Hint}" Margin="0,0,0,12"
+                               Text="Use the template: on the first sheet, the Client Code in column A and the Matter Code in column B, one matter per row starting on row 2. Row 1 holds the headings and is skipped." />
+                    <StackPanel Orientation="Horizontal">
+                        <ui:Button Content="Choose file…" Icon="{ui:SymbolIcon FolderOpen24}" Click="OnChooseFile" />
+                    </StackPanel>
+                    <TextBlock x:Name="FileText" Margin="0,10,0,0" TextWrapping="Wrap" Text="No file chosen." />
+                    <CheckBox x:Name="PadCodes" Margin="0,12,0,0" IsChecked="True"
+                              Content="Add leading zeros to client and matter codes (only when the firm's codes are numeric)" />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="CloseButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Close matters" Icon="{ui:SymbolIcon FolderProhibited24}" Click="OnClose" />
+                <StackPanel x:Name="CriteriaReports" DockPanel.Dock="Right" Orientation="Horizontal" Margin="0,0,8,0">
+                    <ui:Button x:Name="ExceptionsButton" Content="Matters that can't be closed" Icon="{ui:SymbolIcon DocumentError24}" Click="OnExceptionReport" />
+                    <ui:Button x:Name="ToCloseButton" Content="Matters to be closed" Icon="{ui:SymbolIcon DocumentBulletList24}" Margin="8,0,0,0" Click="OnToCloseReport" />
+                </StackPanel>
+                <ui:Button x:Name="CheckFileButton" DockPanel.Dock="Right" Margin="0,0,8,0" Visibility="Collapsed" IsEnabled="False"
+                           Content="Check the file" Icon="{ui:SymbolIcon DocumentBulletList24}" Click="OnCheckFile" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

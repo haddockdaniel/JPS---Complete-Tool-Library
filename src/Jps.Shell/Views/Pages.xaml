@@ -1,0 +1,380 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:vm="clr-namespace:Jps.Shell.ViewModels"
+    xmlns:v="clr-namespace:Jps.Shell.Views">
+
+    <v:BoolToVisibility x:Key="BoolToVisibility" />
+    <v:HasValueToVisibility x:Key="HasValueToVisibility" />
+    <v:EnumToVisibility x:Key="EnumToVisibility" />
+    <v:ToUpper x:Key="ToUpper" />
+
+    <!-- Shared text styles -->
+    <Style x:Key="PageTitle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+        <Setter Property="FontSize" Value="32" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    </Style>
+    <Style x:Key="Eyebrow" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource BrandRedBrightBrush}" />
+    </Style>
+    <Style x:Key="Secondary" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="LineHeight" Value="21" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+    </Style>
+    <Style x:Key="SectionLabel" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    </Style>
+
+    <!-- Glass panel -->
+    <Style x:Key="Surface" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource GlassEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Padding" Value="22" />
+    </Style>
+
+    <!-- Big glowing icon tile used on tool headers -->
+    <Style x:Key="IconOrb" TargetType="Border">
+        <Setter Property="Width" Value="60" />
+        <Setter Property="Height" Value="60" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="Background" Value="{StaticResource BrandGradientBrush}" />
+        <Setter Property="Effect" Value="{StaticResource RedGlow}" />
+    </Style>
+
+    <!-- Badge: Licensed / Locked -->
+    <DataTemplate x:Key="AccessBadge" DataType="{x:Type vm:ToolCard}">
+        <Grid>
+            <Border Padding="9,3" CornerRadius="10" Background="{StaticResource BrandGradientBrush}"
+                    Visibility="{Binding IsLicensed, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="CheckmarkCircle16" FontSize="12" Margin="0,0,4,0" Foreground="White" />
+                    <TextBlock Text="LICENSED" FontSize="10.5" FontWeight="Bold" Foreground="White" />
+                </StackPanel>
+            </Border>
+            <Border Padding="9,3" CornerRadius="10" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                    Visibility="{Binding IsLicensed, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="LockClosed16" FontSize="11" Margin="0,0,4,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="NOT LICENSED" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </DataTemplate>
+
+    <!-- Clickable glass tile on the home page: lifts and glows red on hover -->
+    <Style x:Key="ToolTile" TargetType="Button">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Width" Value="300" />
+        <Setter Property="Height" Value="182" />
+        <Setter Property="Margin" Value="0,0,16,16" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Tile" CornerRadius="16" BorderThickness="1" Padding="18"
+                            Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{StaticResource GlassEdgeBrush}" RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <TranslateTransform x:Name="Lift" Y="0" />
+                        </Border.RenderTransform>
+                        <ContentPresenter />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Tile" Property="BorderBrush" Value="{StaticResource GlassEdgeHoverBrush}" />
+                            <Setter TargetName="Tile" Property="Background" Value="{StaticResource GlassFillHoverBrush}" />
+                            <Setter TargetName="Tile" Property="Effect" Value="{StaticResource RedGlowSoft}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Lift" Storyboard.TargetProperty="Y" To="-4" Duration="0:0:0.15" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Lift" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.2" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Tile" Property="Opacity" Value="0.85" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Group heading on the home page: red bar + bold upper-case title + hairline -->
+    <DataTemplate x:Key="GroupHeading">
+        <Grid Margin="0,0,16,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Width="4" Height="20" CornerRadius="2" Margin="0,0,10,0" Background="{StaticResource BrandGradientBrush}" Effect="{StaticResource RedGlowSoft}" />
+            <TextBlock Grid.Column="1" Text="{Binding Converter={StaticResource ToUpper}}" Style="{StaticResource SectionLabel}" VerticalAlignment="Center" />
+            <Rectangle Grid.Column="2" Height="1" Margin="14,0,0,0" VerticalAlignment="Center" Fill="{StaticResource BrandHairlineBrush}" Opacity="0.6" />
+        </Grid>
+    </DataTemplate>
+
+    <!-- ============ Home ============ -->
+    <DataTemplate DataType="{x:Type vm:HomePage}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="36,28,20,36">
+                <!-- Hero -->
+                <TextBlock Style="{StaticResource Eyebrow}" Text="JPS UTILITIES FOR JURIS" />
+                <TextBlock Style="{StaticResource PageTitle}" FontSize="40" Margin="0,2,0,0">
+                    <Run Text="Your " /><Run Text="tool library" Foreground="{StaticResource BrandTitleBrush}" />
+                </TextBlock>
+                <TextBlock Style="{StaticResource Secondary}" Margin="0,6,0,0" Text="Every tool runs against the Juris company selected at the top of the window." />
+                <WrapPanel Margin="0,18,0,0">
+                    <Border Padding="16,10" CornerRadius="12" Margin="0,0,12,0" Background="{StaticResource BrandGradientBrush}" Effect="{StaticResource RedGlowSoft}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontFamily="{StaticResource DisplayFont}" FontSize="24" FontWeight="Bold" Foreground="White" VerticalAlignment="Center">
+                                <Run Text="{Binding LicensedCount, Mode=OneWay}" /><Run Text=" / " FontWeight="Normal" /><Run Text="{Binding TotalCount, Mode=OneWay}" />
+                            </TextBlock>
+                            <TextBlock Text="tools licensed" Margin="10,0,0,0" FontSize="13" Foreground="White" Opacity="0.9" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                    <Border Padding="16,10" CornerRadius="12" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderThickness="1" BorderBrush="{StaticResource GlassEdgeBrush}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="ShieldCheckmark24" FontSize="22" Foreground="{StaticResource BrandRedBrightBrush}" VerticalAlignment="Center" />
+                            <TextBlock Text="Every change is previewed first and either fully saves or doesn't happen" Margin="10,0,0,0" FontSize="13"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </WrapPanel>
+
+                <ui:InfoBar Margin="0,16,12,0" IsClosable="False" Severity="Warning" Title="Tools are locked"
+                            IsOpen="{Binding HasLicenseWarning, Mode=OneWay}" Message="{Binding LicenseWarning}" />
+
+                <ui:TextBox Margin="0,20,12,8" MaxWidth="560" HorizontalAlignment="Left" Width="560"
+                            PlaceholderText="Search tools by name or what they do"
+                            Icon="{ui:SymbolIcon Search24}"
+                            Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Style="{StaticResource Secondary}" Margin="0,24,0,0" Text="No tools match your search."
+                           Visibility="{Binding NothingFound, Converter={StaticResource BoolToVisibility}}" />
+
+                <ItemsControl ItemsSource="{Binding Groups}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:ToolGroup}">
+                            <StackPanel Margin="0,26,0,0">
+                                <ContentPresenter Content="{Binding Name}" ContentTemplate="{StaticResource GroupHeading}" />
+                                <ItemsControl ItemsSource="{Binding Tools}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:ToolCard}">
+                                            <Button Style="{StaticResource ToolTile}" Command="{Binding Open}" ToolTip="{Binding Definition.Description}">
+                                                <DockPanel>
+                                                    <DockPanel DockPanel.Dock="Top" LastChildFill="False">
+                                                        <Border DockPanel.Dock="Left" Width="44" Height="44" CornerRadius="12">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="Background" Value="{StaticResource BrandRedSoftBrush}" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsLicensed}" Value="True">
+                                                                            <Setter Property="Background" Value="{StaticResource BrandGradientBrush}" />
+                                                                            <Setter Property="Effect" Value="{StaticResource RedGlowSoft}" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                            <ui:SymbolIcon Symbol="{Binding Icon}" FontSize="24" Foreground="White" />
+                                                        </Border>
+                                                        <ContentPresenter DockPanel.Dock="Right" VerticalAlignment="Top" Content="{Binding}" ContentTemplate="{StaticResource AccessBadge}" />
+                                                    </DockPanel>
+                                                    <TextBlock DockPanel.Dock="Top" Margin="0,14,0,4" Text="{Binding Definition.Name}" FontFamily="{StaticResource DisplayFont}"
+                                                               FontSize="15.5" FontWeight="Bold" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,6,0,0"
+                                                                Visibility="{Binding Definition.HasTemplate, Converter={StaticResource BoolToVisibility}}">
+                                                        <ui:SymbolIcon Symbol="DocumentTable16" FontSize="13" Margin="0,0,5,0" Foreground="{StaticResource BrandRedBrightBrush}" />
+                                                        <TextBlock Text="Includes import template" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding Definition.Description}" FontSize="12.5" TextWrapping="Wrap" TextTrimming="WordEllipsis"
+                                                               LineHeight="18" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                </DockPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+
+    <!-- ============ Licensed tool ============ -->
+    <DataTemplate DataType="{x:Type vm:ToolPage}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="36,28,36,36" MaxWidth="1120" HorizontalAlignment="Stretch">
+                <DockPanel>
+                    <Border DockPanel.Dock="Left" Style="{StaticResource IconOrb}" Margin="0,0,18,0" VerticalAlignment="Center">
+                        <ui:SymbolIcon Symbol="{Binding Icon}" FontSize="30" Foreground="White" />
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource Eyebrow}" Text="{Binding Definition.Group, Converter={StaticResource ToUpper}}" />
+                        <TextBlock Style="{StaticResource PageTitle}" Text="{Binding Definition.Name}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </DockPanel>
+                <Rectangle Height="2" Margin="0,18,0,0" Fill="{StaticResource BrandHairlineBrush}" HorizontalAlignment="Stretch" />
+                <TextBlock Style="{StaticResource Secondary}" FontSize="14.5" LineHeight="22" Margin="0,16,0,0" MaxWidth="860" HorizontalAlignment="Left"
+                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" Opacity="0.85"
+                           Text="{Binding Definition.Description}" />
+
+                <!-- Template download -->
+                <Border Style="{StaticResource Surface}" Margin="0,24,0,0"
+                        Visibility="{Binding Definition.HasTemplate, Converter={StaticResource BoolToVisibility}}">
+                    <DockPanel>
+                        <ui:SymbolIcon DockPanel.Dock="Left" Symbol="DocumentTable24" FontSize="28" Margin="0,0,16,0" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                        <ui:Button DockPanel.Dock="Right" Appearance="Primary" VerticalAlignment="Center" Content="Download template"
+                                   Icon="{ui:SymbolIcon ArrowDownload24}" Command="{Binding SaveTemplateCommand}" />
+                        <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                            <TextBlock Style="{StaticResource SectionLabel}" Text="Import template" />
+                            <TextBlock Style="{StaticResource Secondary}">
+                                <Run Text="Fill in this " /><Run Text="{Binding TemplateKind, Mode=OneWay}" /><Run Text=" and load it into the tool. The template is built in, so no internet connection is needed." />
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource Secondary}" Margin="0,6,0,0" Text="{Binding Notice}" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                       Visibility="{Binding Notice, Converter={StaticResource HasValueToVisibility}}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <!-- The tool's own UI -->
+                <ContentPresenter Margin="0,24,0,0" Content="{Binding ModuleView}"
+                                  Visibility="{Binding ModuleView, Converter={StaticResource HasValueToVisibility}}" />
+
+                <ui:InfoBar Margin="0,24,0,0" IsOpen="{Binding ShowConnectPrompt, Mode=OneWay}" IsClosable="False" Severity="Warning"
+                            Visibility="{Binding ShowConnectPrompt, Converter={StaticResource BoolToVisibility}}"
+                            Title="Select a company" Message="Pick the Juris company at the top of the window to run this tool." />
+
+                <Border Style="{StaticResource Surface}" Margin="0,24,0,0" Padding="32"
+                        Visibility="{Binding ShowComingSoon, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel HorizontalAlignment="Center">
+                        <ui:SymbolIcon Symbol="Wrench24" FontSize="32" HorizontalAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                        <TextBlock Style="{StaticResource SectionLabel}" Margin="0,10,0,4" HorizontalAlignment="Center" Text="Being moved into the Tool Library" />
+                        <TextBlock Style="{StaticResource Secondary}" TextAlignment="Center" MaxWidth="460"
+                                   Text="You own this tool. Its screens arrive in an update, and it will open right here when they do." />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+
+    <!-- ============ Locked tool ============ -->
+    <DataTemplate DataType="{x:Type vm:LockedPage}">
+        <Grid>
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="520" Margin="32">
+                <Grid Width="72" Height="72" HorizontalAlignment="Center">
+                    <Ellipse Fill="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                    <ui:SymbolIcon Symbol="LockClosed24" FontSize="32" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </Grid>
+                <TextBlock Margin="0,16,0,8" FontSize="20" FontWeight="SemiBold" TextAlignment="Center" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding Title}" />
+                <TextBlock Style="{StaticResource Secondary}" FontSize="14" LineHeight="21" TextAlignment="Center" Text="{Binding Definition.Description}" />
+                <TextBlock Style="{StaticResource Secondary}" FontSize="14" Margin="0,12,0,0" TextAlignment="Center" Text="{Binding Body}" />
+                <TextBlock Margin="0,20,0,0" FontSize="12" TextAlignment="Center" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding Reference}" />
+            </StackPanel>
+        </Grid>
+    </DataTemplate>
+
+    <!-- ============ License ============ -->
+    <DataTemplate DataType="{x:Type vm:LicensePage}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="32,24,32,32" MaxWidth="1100">
+                <DockPanel LastChildFill="False">
+                    <TextBlock DockPanel.Dock="Left" Style="{StaticResource PageTitle}" Text="License" />
+                    <ui:Button DockPanel.Dock="Right" Content="Import license file" Icon="{ui:SymbolIcon Key24}" Command="{Binding ImportCommand}" />
+                </DockPanel>
+
+                <ui:InfoBar Margin="0,16,0,0" IsClosable="False" IsOpen="True" Severity="Informational" Title="License"
+                            Message="{Binding Notice}" Visibility="{Binding Notice, Converter={StaticResource HasValueToVisibility}}" />
+
+                <Border Style="{StaticResource Surface}" Margin="0,16,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                        </Grid.RowDefinitions>
+                        <Grid.Resources>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Secondary}">
+                                <Setter Property="Margin" Value="0,4" />
+                            </Style>
+                        </Grid.Resources>
+                        <TextBlock Grid.Row="0" Text="Licensed to" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Firm}" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                        <TextBlock Grid.Row="1" Text="Status" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Status}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                        <TextBlock Grid.Row="2" Text="Tools owned" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding OwnedSummary}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                        <TextBlock Grid.Row="3" Text="Databases" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Databases}" />
+                        <TextBlock Grid.Row="4" Text="License ID" />
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding LicenseId}" />
+                        <TextBlock Grid.Row="5" Text="Issued" />
+                        <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding Issued}" />
+                        <TextBlock Grid.Row="6" Text="File" />
+                        <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding LoadedFrom}" />
+                    </Grid>
+                </Border>
+
+                <TextBlock Style="{StaticResource SectionLabel}" Margin="0,24,0,10" Text="Tools" />
+                <Border Style="{StaticResource Surface}" Padding="0">
+                    <ItemsControl ItemsSource="{Binding Rows}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:LicenseRow}">
+                                <Border BorderThickness="0,0,0,1" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" Padding="20,10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="140" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="170" />
+                                            <ColumnDefinition Width="110" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Style="{StaticResource Secondary}" Text="{Binding Group}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Id}" FontFamily="Consolas" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                        <StackPanel Grid.Column="3" Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="CheckmarkCircle16" Foreground="{DynamicResource SystemFillColorSuccessBrush}" Margin="0,0,6,0"
+                                                           Visibility="{Binding Owned, Converter={StaticResource BoolToVisibility}}" />
+                                            <ui:SymbolIcon Symbol="LockClosed16" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,6,0"
+                                                           Visibility="{Binding Owned, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                                            <TextBlock Style="{StaticResource Secondary}" Text="Owned" Visibility="{Binding Owned, Converter={StaticResource BoolToVisibility}}" />
+                                            <TextBlock Style="{StaticResource Secondary}" Text="Not owned" Visibility="{Binding Owned, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+</ResourceDictionary>

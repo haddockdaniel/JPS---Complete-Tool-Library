@@ -1,0 +1,16 @@
+<Project>
+  <!-- Shared settings. Everything is x86 because the Juris libraries (lib\Juris) are 32-bit. -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <Company>JPS</Company>
+    <Product>JPS Tool Library</Product>
+    <Version>1.0.0</Version>
+    <JurisLib>$(MSBuildThisFileDirectory)lib\Juris\</JurisLib>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

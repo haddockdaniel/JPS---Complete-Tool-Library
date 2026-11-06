@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>JPS Tool Library</AssemblyName>
+    <RootNamespace>Jps.Shell</RootNamespace>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WPF-UI: MIT licensed, free. Fluent (Windows 11) styling, Mica, light/dark themes. -->
+    <PackageReference Include="WPF-UI" Version="3.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Jps.Core\Jps.Core.csproj" />
+    <ProjectReference Include="..\Jps.Tools\Jps.Tools.csproj" />
+  </ItemGroup>
+
+  <!-- ActiveReports 6 runtime license (Archive Bill Bulk Print, via Juris's JurisSVR21). .NET looks for a resource named
+       "<exe file name>.licenses" in the entry exe. This is the original tool's compiled licenses.licx (same keys, see
+       Licensing\licenses.licx) re-keyed to "JPS TOOL LIBRARY.EXE"; it must be regenerated if AssemblyName changes.
+       Embedded directly because LC.exe isn't available to dotnet build. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Licensing\JPS Tool Library.exe.licenses" LogicalName="JPS Tool Library.exe.licenses" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" />
+    <Resource Include="Assets\LexisNexisLogo.bmp" />
+  </ItemGroup>
+
+  <!-- Developer convenience: drop a license next to the exe if one was generated into the repo root. -->
+  <ItemGroup>
+    <None Include="..\..\JPS.license" Condition="Exists('..\..\JPS.license')" CopyToOutputDirectory="PreserveNewest" Link="JPS.license" Visible="false" />
+  </ItemGroup>
+
+</Project>

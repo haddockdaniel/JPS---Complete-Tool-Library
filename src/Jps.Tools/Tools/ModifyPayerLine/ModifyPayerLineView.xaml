@@ -1,0 +1,63 @@
+<UserControl x:Class="Jps.Tools.Tools.ModifyPayerLine.ModifyPayerLineView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Pick the receipt date" />
+                    <DatePicker x:Name="DateBox" Width="200" HorizontalAlignment="Left" SelectedDateChanged="OnDateChanged" />
+                    <TextBlock x:Name="DateHint" Style="{StaticResource Hint}" Text="The cash receipt batches with receipts on this date are listed below." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Pick the batch and receipt" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="Batch" VerticalAlignment="Center" />
+                        <ComboBox x:Name="BatchBox" Grid.Column="1" Width="200" HorizontalAlignment="Left" Margin="0,4"
+                                  SelectionChanged="OnBatchChanged" />
+                        <TextBlock Grid.Row="1" Text="Record" VerticalAlignment="Center" />
+                        <ComboBox x:Name="RecordBox" Grid.Row="1" Grid.Column="1" Width="200" HorizontalAlignment="Left" Margin="0,4"
+                                  SelectionChanged="OnRecordChanged" />
+                        <CheckBox x:Name="AllBox" Grid.Row="2" Grid.Column="1" Margin="0,4" Content="Change every receipt in this batch"
+                                  Checked="OnAllChanged" Unchecked="OnAllChanged" />
+                        <TextBlock Grid.Row="3" Text="Current payer" VerticalAlignment="Center" />
+                        <TextBox x:Name="CurrentBox" Grid.Row="3" Grid.Column="1" Width="420" HorizontalAlignment="Left" Margin="0,4" IsReadOnly="True" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="3  Enter the new payer" />
+                    <TextBox x:Name="NewBox" Width="420" HorizontalAlignment="Left" MaxLength="50" TextChanged="OnNewChanged" />
+                    <TextBlock x:Name="NewHint" Style="{StaticResource Hint}"
+                               Text="Up to 50 characters. The payer changes on the receipt and on each of its A/R allocation lines. General ledger, trust ledger and check register entries keep their text." />
+                </StackPanel>
+            </Border>
+
+            <TextBlock x:Name="ReadyHint" Style="{StaticResource Hint}" Margin="0,0,0,8" />
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="ApplyButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Change payer" Icon="{ui:SymbolIcon Payment24}" Click="OnApply" />
+                <ui:Button x:Name="PreviewButton" DockPanel.Dock="Right" Margin="0,0,8,0" IsEnabled="False"
+                           Content="Show receipts" Icon="{ui:SymbolIcon DocumentTable24}" Click="OnPreview" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

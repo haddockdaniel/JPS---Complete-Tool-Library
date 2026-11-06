@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>Jps.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="JurisAuthenticator"><HintPath>$(JurisLib)JurisAuthenticator.dll</HintPath></Reference>
+    <Reference Include="Gizmox.Extensions"><HintPath>$(JurisLib)Gizmox.Extensions.dll</HintPath></Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Xml.Linq" />
+  </ItemGroup>
+
+  <!-- Shipped next to the exe so JurisAuthenticator can resolve its own dependencies. -->
+  <ItemGroup>
+    <None Include="$(JurisLib)*.dll" CopyToOutputDirectory="PreserveNewest" Link="%(Filename)%(Extension)" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Catalog\tools.json" LogicalName="Jps.Catalog.tools.json" />
+    <EmbeddedResource Include="Licensing\license-public-key.xml" LogicalName="Jps.Licensing.public-key.xml" />
+    <EmbeddedResource Include="Templates\*.xlsx;Templates\*.csv" LogicalName="Jps.Templates.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

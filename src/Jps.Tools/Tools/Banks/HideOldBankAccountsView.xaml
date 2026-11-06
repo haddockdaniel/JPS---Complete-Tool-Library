@@ -1,0 +1,43 @@
+<UserControl x:Class="Jps.Tools.Tools.Banks.HideOldBankAccountsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Pick the bank account" />
+                    <ComboBox x:Name="BankBox" MaxWidth="520" HorizontalAlignment="Left" MinWidth="360"
+                              DisplayMemberPath="Display" SelectionChanged="OnBankChanged" />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="The account is only removed from the Tables view in Juris. Its history is kept in Juris." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Check it can be hidden" />
+                    <TextBlock Style="{StaticResource Hint}" Margin="0,0,0,12"
+                               Text="The account must not belong to an office, must have no activity in the last 9 months, and must hold no trust money or unposted work." />
+                    <ui:Button x:Name="CheckButton" Content="Run checks" Icon="{ui:SymbolIcon ShieldTask24}" Click="OnCheck" />
+                    <ItemsControl x:Name="Results" Margin="0,12,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="0,3">
+                                    <ui:SymbolIcon Symbol="{Binding Icon}" Foreground="{Binding Brush}" Margin="0,0,8,0" />
+                                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap" MaxWidth="760" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="HideButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Hide bank account" Icon="{ui:SymbolIcon EyeOff24}" Click="OnHide" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

@@ -1,0 +1,66 @@
+<UserControl x:Class="Jps.Tools.Tools.PracticeClass.PracticeClassView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Choose the practice classes" />
+                    <WrapPanel>
+                        <StackPanel Margin="0,0,24,0">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Change from" />
+                            <ComboBox x:Name="FromBox" MinWidth="320" MaxWidth="420" DisplayMemberPath="Display"
+                                      IsTextSearchEnabled="True" TextSearch.TextPath="Display" SelectionChanged="OnInputChanged" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Change to" />
+                            <ComboBox x:Name="ToBox" MinWidth="320" MaxWidth="420" DisplayMemberPath="Display"
+                                      IsTextSearchEnabled="True" TextSearch.TextPath="Display" SelectionChanged="OnInputChanged" />
+                        </StackPanel>
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Choose what to change" />
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton x:Name="BothRadio" GroupName="Scope" Content="Clients and matters" IsChecked="True"
+                                     Margin="0,0,24,0" Checked="OnInputChanged" />
+                        <RadioButton x:Name="ClientsRadio" GroupName="Scope" Content="Clients only" Margin="0,0,24,0" Checked="OnInputChanged" />
+                        <RadioButton x:Name="MattersRadio" GroupName="Scope" Content="Matters only" Checked="OnInputChanged" />
+                    </StackPanel>
+                    <CheckBox x:Name="AttyCheck" Margin="0,12,0,0" Content="Only clients and matters with this billing timekeeper"
+                              Checked="OnInputChanged" Unchecked="OnInputChanged" />
+                    <ComboBox x:Name="AttyBox" MinWidth="320" MaxWidth="420" HorizontalAlignment="Left" Margin="28,6,0,0"
+                              DisplayMemberPath="Display" IsTextSearchEnabled="True" TextSearch.TextPath="Display"
+                              Visibility="{Binding IsChecked, ElementName=AttyCheck, Converter={StaticResource Visible}}"
+                              SelectionChanged="OnInputChanged" />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Clients are matched on the client's billing timekeeper; matters on their bill-to's billing timekeeper." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="3  Delete the old practice class (optional)" />
+                    <CheckBox x:Name="DeleteCheck" Content="Delete the old practice class once everything is moved off it"
+                              Checked="OnInputChanged" Unchecked="OnInputChanged" />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Runs in the same step as the change. It is refused, and nothing is changed, while anything still uses the old practice class: clients or matters your choices leave on it, GL accounts set up for the practice class, or saved client filters." />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="RunButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Change practice class" Icon="{ui:SymbolIcon ArrowSwap24}" Click="OnRun" />
+                <ui:Button x:Name="PreviewButton" DockPanel.Dock="Right" Margin="0,0,8,0" IsEnabled="False"
+                           Content="Preview report" Icon="{ui:SymbolIcon DocumentTable24}" Click="OnPreview" />
+                <TextBlock x:Name="WhyDisabled" DockPanel.Dock="Left" Style="{StaticResource Hint}" VerticalAlignment="Center"
+                           MaxWidth="520" Margin="0" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

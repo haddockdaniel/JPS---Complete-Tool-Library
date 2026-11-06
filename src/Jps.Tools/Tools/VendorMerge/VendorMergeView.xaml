@@ -1,0 +1,54 @@
+<UserControl x:Class="Jps.Tools.Tools.VendorMerge.VendorMergeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Pick the two vendors" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <RadioButton x:Name="ActiveOnly" Content="Active vendors only" IsChecked="True" GroupName="VenScope" Checked="OnScopeChanged" />
+                        <RadioButton x:Name="IncludeInactive" Content="Include inactive vendors" Margin="24,0,0,0" GroupName="VenScope" Checked="OnScopeChanged" />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Vendor to keep" />
+                    <ComboBox x:Name="KeepBox" MaxWidth="520" MinWidth="360" HorizontalAlignment="Left"
+                              DisplayMemberPath="Display" IsTextSearchEnabled="True" TextSearch.TextPath="Display"
+                              SelectionChanged="OnVendorChanged" />
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Vendor to merge into it (this vendor is deleted)" Margin="0,12,0,6" />
+                    <ComboBox x:Name="MergeBox" MaxWidth="520" MinWidth="360" HorizontalAlignment="Left" IsEnabled="False"
+                              DisplayMemberPath="Display" IsTextSearchEnabled="True" TextSearch.TextPath="Display"
+                              SelectionChanged="OnVendorChanged" />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Vouchers, checks, unposted batch lines, matter disbursements, recurring voucher templates, notes, 1099 and period totals and user-defined fields move to the vendor you keep. The merged vendor is then deleted." />
+                    <TextBlock x:Name="PickProblem" Style="{StaticResource Hint}" Foreground="IndianRed" Visibility="Collapsed" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Choose the settings to keep" />
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="1099 settings to use" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <RadioButton x:Name="Use1099Keep" Content="From the vendor to keep" IsChecked="True" GroupName="V1099" />
+                        <RadioButton x:Name="Use1099Merge" Content="From the vendor being merged" Margin="24,0,0,0" GroupName="V1099" />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Separate checks for the kept vendor" />
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton x:Name="SepKeep" Content="Keep its current setting" IsChecked="True" GroupName="SepCheck" />
+                        <RadioButton x:Name="SepYes" Content="Change to Yes" Margin="24,0,0,0" GroupName="SepCheck" />
+                        <RadioButton x:Name="SepNo" Content="Change to No" Margin="24,0,0,0" GroupName="SepCheck" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="MergeButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Merge vendors" Icon="{ui:SymbolIcon Merge24}" Click="OnMerge" />
+                <ui:Button x:Name="PreviewButton" DockPanel.Dock="Right" Margin="0,0,8,0" IsEnabled="False"
+                           Content="Preview what moves" Icon="{ui:SymbolIcon DocumentTable24}" Click="OnPreview" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

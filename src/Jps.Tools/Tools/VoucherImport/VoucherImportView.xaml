@@ -1,0 +1,92 @@
+<UserControl x:Class="Jps.Tools.Tools.VoucherImport.VoucherImportView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Set up the batch" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Batch owner (Juris user)" />
+                            <ComboBox x:Name="UserBox" MinWidth="320" MaxWidth="420" DisplayMemberPath="Display" SelectionChanged="OnInputChanged" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Batch title" />
+                            <TextBox x:Name="TitleBox" MinWidth="320" MaxWidth="420" MaxLength="40" Text="Voucher Import Batch #" TextChanged="OnInputChanged" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Style="{StaticResource Hint}" Text="The batch number is added to the end of the title. The batch is filed under this user in the Juris batch list." />
+
+                    <TextBlock Style="{StaticResource FieldLabel}" Margin="0,16,0,4" Text="Invoices that already exist in Juris (same vendor, invoice number and invoice date)" />
+                    <RadioButton x:Name="RejectRadio" GroupName="Dup" IsChecked="True" Checked="OnDuplicateOptionChanged"
+                                 Content="Reject them" />
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <RadioButton x:Name="IncrementRadio" GroupName="Dup" VerticalAlignment="Center" Checked="OnDuplicateOptionChanged"
+                                     Content="Import them with this added to the invoice number:  _" />
+                        <TextBox x:Name="SuffixBox" Width="80" MaxLength="5" Text="1" Margin="4,0,0,0" TextChanged="OnDuplicateOptionChanged" />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Posted vouchers and vouchers in unposted batches both count. An invoice repeated within the file gets _2, _3 … on its later copies." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Choose and check the import file" />
+                    <TextBlock Style="{StaticResource Hint}" Margin="0,0,0,12"
+                               Text="A .csv, .xlsx or .xls file laid out like the template (for Excel: the sheet named Sheet1, or else the first sheet). Row 1 holds the 25 column headings, in any order; the older headings (Type, VoucherDate, VendorCode … ExpBillNote) used by Chrome River, Concur and other exports work too. Row Type says what each row is: A starts an A/P voucher, T starts a trust voucher, and the G (GL line) and E (expense line) rows below an A row belong to that voucher. Every voucher is checked completely; a voucher with any problem is left out whole." />
+                    <StackPanel Orientation="Horizontal">
+                        <ui:Button x:Name="ChooseButton" Content="Choose file…" Icon="{ui:SymbolIcon FolderOpen24}" Click="OnChooseFile" />
+                        <ui:Button x:Name="RecheckButton" Margin="8,0,0,0" Content="Check again" Icon="{ui:SymbolIcon ArrowClockwise24}" IsEnabled="False" Click="OnRecheck" />
+                    </StackPanel>
+                    <TextBlock x:Name="FileText" Margin="0,10,0,0" TextWrapping="Wrap" />
+                    <ItemsControl x:Name="Results" Margin="0,8,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="0,3">
+                                    <ui:SymbolIcon Symbol="{Binding Icon}" Foreground="{Binding Brush}" Margin="0,0,8,0" />
+                                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap" MaxWidth="760" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="3  After the import" />
+                    <RadioButton x:Name="RenameRadio" GroupName="After" IsChecked="True" Checked="OnAfterOptionChanged"
+                                 Content="Rename the import file to .OLD" />
+                    <RadioButton x:Name="MoveRadio" GroupName="After" Margin="0,4,0,0" Checked="OnAfterOptionChanged"
+                                 Content="Move the import file to a folder" />
+                    <StackPanel x:Name="MovePanel" Orientation="Horizontal" Margin="28,8,0,0" Visibility="Collapsed">
+                        <ui:Button Content="Choose folder…" Icon="{ui:SymbolIcon Folder24}" Click="OnChooseFolder" />
+                        <TextBlock x:Name="FolderText" Margin="12,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="600"
+                                   Text="No folder chosen yet." />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="This happens only after the batch has been created, so the same file isn't imported twice by mistake. Nothing is posted: post the batch in Juris." />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="CreateButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Create voucher batch" Icon="{ui:SymbolIcon ArrowImport24}" Click="OnCreate" />
+                <ui:Button x:Name="LinesButton" DockPanel.Dock="Right" Margin="0,0,8,0" Visibility="Collapsed"
+                           Content="Distribution lines" Icon="{ui:SymbolIcon DocumentTable24}" Click="OnShowLines" />
+                <ui:Button x:Name="ProblemsButton" DockPanel.Dock="Right" Margin="0,0,8,0" Visibility="Collapsed"
+                           Content="Problems" Icon="{ui:SymbolIcon DocumentTable24}" Click="OnShowProblems" />
+                <Grid />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

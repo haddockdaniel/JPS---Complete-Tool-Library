@@ -1,0 +1,101 @@
+<UserControl x:Class="Jps.Tools.Tools.MatterStatusLock.MatterStatusLockView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Choose the new status and lock" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="New matter status" />
+                            <ComboBox x:Name="StatusBox" DisplayMemberPath="Name" SelectionChanged="OnStatusChanged" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="New matter lock" />
+                            <ComboBox x:Name="LockBox" DisplayMemberPath="Name" SelectionChanged="OnInputChanged" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Closing a matter always sets the lock to Disallow time and expenses. A matter is closed only when it has no unbilled time or expenses (WIP), unposted time or expenses, open or unposted vouchers, open bills or A/R, unposted cash receipts, prepaid or trust balance, open prebills and no split billing; the others are listed in a report of matters that can't be closed." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Choose the matters" />
+                    <WrapPanel>
+                        <RadioButton x:Name="ClientMode" GroupName="Mode" IsChecked="True" Margin="0,0,20,6" Content="By client and matter" Checked="OnModeChanged" />
+                        <RadioButton x:Name="TkprMode" GroupName="Mode" Margin="0,0,20,6" Content="By billing timekeeper" Checked="OnModeChanged" />
+                        <RadioButton x:Name="BillMode" GroupName="Mode" Margin="0,0,20,6" Content="By last bill date" Checked="OnModeChanged" />
+                        <RadioButton x:Name="SheetMode" GroupName="Mode" Margin="0,0,20,6" Content="From a spreadsheet" Checked="OnModeChanged" />
+                    </WrapPanel>
+
+                    <!-- Client -->
+                    <StackPanel x:Name="ClientPanel" Margin="0,10,0,0">
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="Client" />
+                        <ComboBox x:Name="ClientBox" DisplayMemberPath="Display" MaxWidth="520" MinWidth="360" HorizontalAlignment="Left"
+                                  SelectionChanged="OnClientChanged" />
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <RadioButton x:Name="AllMatters" GroupName="ClientScope" IsChecked="True" Margin="0,0,20,0" Content="All matters for the client" Checked="OnScopeChanged" />
+                            <RadioButton x:Name="SomeMatters" GroupName="ClientScope" Content="Only the matters I pick" Checked="OnScopeChanged" />
+                        </StackPanel>
+                        <c:CheckList x:Name="MatterList" Height="260" Margin="0,10,0,0" Placeholder="Search matters" Visibility="Collapsed"
+                                     SelectionChanged="OnMattersPicked" />
+                    </StackPanel>
+
+                    <!-- Billing timekeeper -->
+                    <StackPanel x:Name="TkprPanel" Margin="0,10,0,0" Visibility="Collapsed">
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="Billing timekeeper" />
+                        <ComboBox x:Name="TkprBox" DisplayMemberPath="Display" MaxWidth="520" MinWidth="360" HorizontalAlignment="Left"
+                                  SelectionChanged="OnInputChanged" />
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <CheckBox x:Name="OpenedLimit" VerticalAlignment="Center" Content="Only matters opened on or before"
+                                      Checked="OnInputChanged" Unchecked="OnInputChanged" />
+                            <DatePicker x:Name="OpenedDate" Width="160" Margin="8,0,0,0" SelectedDateChanged="OnInputChanged"
+                                        IsEnabled="{Binding IsChecked, ElementName=OpenedLimit}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Last bill date -->
+                    <StackPanel x:Name="BillPanel" Margin="0,10,0,0" Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Matters whose last bill was on or before" VerticalAlignment="Center" />
+                            <DatePicker x:Name="LastBillDate" Width="160" Margin="8,0,0,0" SelectedDateChanged="OnInputChanged" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <CheckBox x:Name="NeverBilled" VerticalAlignment="Center" Content="Also include never-billed matters opened before"
+                                      Checked="OnInputChanged" Unchecked="OnInputChanged" />
+                            <DatePicker x:Name="NeverBilledDate" Width="160" Margin="8,0,0,0" SelectedDateChanged="OnInputChanged"
+                                        IsEnabled="{Binding IsChecked, ElementName=NeverBilled}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Spreadsheet -->
+                    <StackPanel x:Name="SheetPanel" Margin="0,10,0,0" Visibility="Collapsed">
+                        <TextBlock Style="{StaticResource Hint}" Margin="0,0,0,10"
+                                   Text="Use the template: on the first sheet, the Client Code in column A and the Matter Code in column B, one matter per row starting on row 2 (row 1 holds the headings). Leading zeros are added automatically when the firm's codes are numbers. Every matter in the file is listed in the review, including ones that already have the new settings." />
+                        <StackPanel Orientation="Horizontal">
+                            <ui:Button Content="Choose file…" Icon="{ui:SymbolIcon FolderOpen24}" Click="OnChooseFile" />
+                        </StackPanel>
+                        <TextBlock x:Name="FileText" Margin="0,10,0,0" TextWrapping="Wrap" Text="No file chosen." />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="RunButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Review and update" Icon="{ui:SymbolIcon LockClosed24}" Click="OnRun" />
+                <TextBlock x:Name="NotReadyText" DockPanel.Dock="Right" Margin="0,0,16,0" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="520"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

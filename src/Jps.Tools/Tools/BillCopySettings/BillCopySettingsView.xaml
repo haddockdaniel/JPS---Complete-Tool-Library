@@ -1,0 +1,113 @@
+<UserControl x:Class="Jps.Tools.Tools.BillCopySettings.BillCopySettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Choose how to pick the matters" />
+                    <WrapPanel>
+                        <RadioButton x:Name="ModeBilling" GroupName="Mode" Content="By billing timekeeper" IsChecked="True" Margin="0,0,24,4" Checked="OnModeChanged" />
+                        <RadioButton x:Name="ModeOrig" GroupName="Mode" Content="By originating timekeeper" Margin="0,0,24,4" Checked="OnModeChanged" />
+                        <RadioButton x:Name="ModeClient" GroupName="Mode" Content="By client" Margin="0,0,24,4" Checked="OnModeChanged" />
+                        <RadioButton x:Name="ModeTemplate" GroupName="Mode" Content="From a template file" Margin="0,0,24,4" Checked="OnModeChanged" />
+                    </WrapPanel>
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Bill copy settings belong to a bill-to, not a matter: every matter that shares a bill-to with a chosen matter changes too. Closed matters are never chosen." />
+                </StackPanel>
+            </Border>
+
+            <Border x:Name="SelectCard" Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock x:Name="SelectTitle" Style="{StaticResource ToolCardTitle}" Text="2  Pick the billing timekeeper" />
+
+                    <StackPanel x:Name="TkprPanel">
+                        <ComboBox x:Name="TkprBox" MaxWidth="520" HorizontalAlignment="Left" MinWidth="360"
+                                  DisplayMemberPath="Display" TextSearch.TextPath="Display" SelectionChanged="OnInputChanged" />
+                        <TextBlock x:Name="TkprHint" Style="{StaticResource Hint}"
+                                   Text="Open matters whose bill-to has this billing timekeeper are changed." />
+                    </StackPanel>
+
+                    <StackPanel x:Name="ClientPanel" Visibility="Collapsed">
+                        <c:CheckList x:Name="ClientList" Height="300" Placeholder="Search clients" SelectionChanged="OnInputChanged" />
+                        <TextBlock Style="{StaticResource Hint}" Text="All open matters of the checked clients are changed." />
+                    </StackPanel>
+
+                    <StackPanel x:Name="TemplatePanel" Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:Button Content="Choose file…" Icon="{ui:SymbolIcon FolderOpen24}" Click="OnChooseFile" />
+                            <ui:Button x:Name="ErrorsButton" Content="Show errors" Margin="8,0,0,0" Icon="{ui:SymbolIcon ErrorCircle24}"
+                                       Visibility="Collapsed" Click="OnShowErrors" />
+                        </StackPanel>
+                        <TextBlock x:Name="FileText" Style="{StaticResource Hint}" Margin="0,8,0,0" />
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Use the template (.xlsx or .csv) with a heading row and these columns in this order: Client Code, Matter Code, Apply To (Client Bill-Tos or All Matters, used when Matter Code is blank), Number of Copies, Print Bill, Print A/R Statement, Email Format, Export Format, Comment. A blank cell leaves that setting unchanged. Files made from the older template (Type C or A) still work. Every row is checked first; nothing is changed until the whole file is free of errors." />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border x:Name="SettingsCard" Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="3  Tick the settings to change" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="220" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <CheckBox x:Name="CopiesCheck" Grid.Row="0" Content="Number of copies" VerticalAlignment="Center" Checked="OnInputChanged" Unchecked="OnInputChanged" />
+                        <TextBox x:Name="CopiesBox" Grid.Row="0" Grid.Column="1" Width="120" HorizontalAlignment="Left" Margin="0,4" MaxLength="6" Text="1"
+                                 GotKeyboardFocus="OnCopiesFocus" TextChanged="OnInputChanged" />
+
+                        <CheckBox x:Name="PrintCheck" Grid.Row="1" Content="Print bill" VerticalAlignment="Center" Checked="OnInputChanged" Unchecked="OnInputChanged" />
+                        <ComboBox x:Name="PrintBox" Grid.Row="1" Grid.Column="1" Width="200" HorizontalAlignment="Left" Margin="0,4"
+                                  SelectedIndex="1" GotKeyboardFocus="OnPrintFocus">
+                            <ComboBoxItem Content="No" />
+                            <ComboBoxItem Content="Yes (default)" />
+                        </ComboBox>
+
+                        <CheckBox x:Name="ARCheck" Grid.Row="2" Content="Print A/R statement" VerticalAlignment="Center" Checked="OnInputChanged" Unchecked="OnInputChanged" />
+                        <ComboBox x:Name="ARBox" Grid.Row="2" Grid.Column="1" Width="200" HorizontalAlignment="Left" Margin="0,4"
+                                  SelectedIndex="0" GotKeyboardFocus="OnARFocus">
+                            <ComboBoxItem Content="No (default)" />
+                            <ComboBoxItem Content="Yes" />
+                        </ComboBox>
+
+                        <CheckBox x:Name="EmailCheck" Grid.Row="3" Content="Email format" VerticalAlignment="Center" Checked="OnInputChanged" Unchecked="OnInputChanged" />
+                        <ComboBox x:Name="EmailBox" Grid.Row="3" Grid.Column="1" Width="200" HorizontalAlignment="Left" Margin="0,4"
+                                  GotKeyboardFocus="OnEmailFocus" />
+
+                        <CheckBox x:Name="ExportCheck" Grid.Row="4" Content="Export format" VerticalAlignment="Center" Checked="OnInputChanged" Unchecked="OnInputChanged" />
+                        <ComboBox x:Name="ExportBox" Grid.Row="4" Grid.Column="1" Width="200" HorizontalAlignment="Left" Margin="0,4"
+                                  GotKeyboardFocus="OnExportFocus" />
+
+                        <CheckBox x:Name="CommentCheck" Grid.Row="5" Content="Comment (30 characters)" VerticalAlignment="Center" Checked="OnInputChanged" Unchecked="OnInputChanged" />
+                        <TextBox x:Name="CommentBox" Grid.Row="5" Grid.Column="1" Width="360" HorizontalAlignment="Left" Margin="0,4" MaxLength="30"
+                                 GotKeyboardFocus="OnCommentFocus" />
+                    </Grid>
+                    <TextBlock Style="{StaticResource Hint}" Margin="0,8,0,0"
+                               Text="Only ticked settings change. Clicking a setting ticks it. Settings are changed on every bill copy (every bill address) of each bill-to." />
+                </StackPanel>
+            </Border>
+
+            <TextBlock x:Name="ReadyHint" Style="{StaticResource Hint}" Margin="0,0,0,8" />
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="ApplyButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Review and update" Icon="{ui:SymbolIcon DocumentCopy24}" Click="OnApply" />
+                <ui:Button x:Name="PreviewButton" DockPanel.Dock="Right" Margin="0,0,8,0" IsEnabled="False"
+                           Content="Show matters" Icon="{ui:SymbolIcon DocumentTable24}" Click="OnPreview" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

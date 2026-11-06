@@ -1,0 +1,34 @@
+<UserControl x:Class="Jps.Tools.Tools.VendorDiscountAccount.VendorAccountSwapView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock x:Name="FromTitle" Style="{StaticResource ToolCardTitle}" Text="1  Pick the account to replace" />
+                    <ComboBox x:Name="FromBox" MaxWidth="520" HorizontalAlignment="Left" MinWidth="360"
+                              DisplayMemberPath="Display" TextSearch.TextPath="Display" SelectionChanged="OnSelectionChanged" />
+                    <TextBlock x:Name="FromHint" Style="{StaticResource Hint}" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock x:Name="ToTitle" Style="{StaticResource ToolCardTitle}" Text="2  Pick the new account" />
+                    <ComboBox x:Name="ToBox" MaxWidth="520" HorizontalAlignment="Left" MinWidth="360"
+                              DisplayMemberPath="Display" TextSearch.TextPath="Display" SelectionChanged="OnSelectionChanged" />
+                    <TextBlock x:Name="ToHint" Style="{StaticResource Hint}" />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="ApplyButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Change vendors" Icon="{ui:SymbolIcon ArrowSwap24}" Click="OnApply" />
+                <ui:Button x:Name="PreviewButton" DockPanel.Dock="Right" Margin="0,0,8,0" IsEnabled="False"
+                           Content="Show vendors" Icon="{ui:SymbolIcon DocumentTable24}" Click="OnPreview" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

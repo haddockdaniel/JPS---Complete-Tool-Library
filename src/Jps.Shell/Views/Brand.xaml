@@ -1,0 +1,87 @@
+<!--
+  JPS Tool Library brand layer, built on the LexisNexis palette (signature red + black + white).
+  Theme-neutral: every brush here reads well over both the dark (default) and light WPF-UI themes, and all text
+  colours still come from WPF-UI's DynamicResources so the theme toggle keeps working.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Color x:Key="BrandRedColor">#E3051B</Color>
+    <Color x:Key="BrandRedBrightColor">#FF3347</Color>
+    <Color x:Key="BrandCrimsonColor">#8C0414</Color>
+    <Color x:Key="BrandEmberColor">#FF6A3D</Color>
+
+    <SolidColorBrush x:Key="BrandRedBrush" Color="{StaticResource BrandRedColor}" />
+    <SolidColorBrush x:Key="BrandRedBrightBrush" Color="{StaticResource BrandRedBrightColor}" />
+    <SolidColorBrush x:Key="BrandRedSoftBrush" Color="#33E3051B" />
+    <SolidColorBrush x:Key="BrandRedFaintBrush" Color="#1AE3051B" />
+
+    <!-- Signature gradient: crimson → LN red → ember. Selected nav item, primary tiles, hero accents. -->
+    <LinearGradientBrush x:Key="BrandGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{StaticResource BrandCrimsonColor}" Offset="0" />
+        <GradientStop Color="{StaticResource BrandRedColor}" Offset="0.55" />
+        <GradientStop Color="{StaticResource BrandEmberColor}" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Gradient text for big titles. -->
+    <LinearGradientBrush x:Key="BrandTitleBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#FF4D5E" Offset="0" />
+        <GradientStop Color="#E3051B" Offset="0.5" />
+        <GradientStop Color="#FF7A45" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Hairline under page headers: bright at the left, fading out. -->
+    <LinearGradientBrush x:Key="BrandHairlineBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#FFE3051B" Offset="0" />
+        <GradientStop Color="#80FF6A3D" Offset="0.35" />
+        <GradientStop Color="#00FF6A3D" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Glass card edge: lit from the top-left like a pane of glass, with a red kiss on the left. -->
+    <LinearGradientBrush x:Key="GlassEdgeBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#99E3051B" Offset="0" />
+        <GradientStop Color="#40FFFFFF" Offset="0.18" />
+        <GradientStop Color="#14FFFFFF" Offset="0.6" />
+        <GradientStop Color="#0AFFFFFF" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="GlassEdgeHoverBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FFFF3347" Offset="0" />
+        <GradientStop Color="#99E3051B" Offset="0.4" />
+        <GradientStop Color="#33FF6A3D" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Glass fill: a whisper of white over the background, slightly brighter at the top. -->
+    <LinearGradientBrush x:Key="GlassFillBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#16FFFFFF" Offset="0" />
+        <GradientStop Color="#08FFFFFF" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="GlassFillHoverBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#26FF3347" Offset="0" />
+        <GradientStop Color="#0AFFFFFF" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Soft red glow for selected / hovered elements. -->
+    <DropShadowEffect x:Key="RedGlow" Color="#FF1F35" BlurRadius="22" ShadowDepth="0" Opacity="0.65" />
+    <DropShadowEffect x:Key="RedGlowSoft" Color="#FF1F35" BlurRadius="16" ShadowDepth="0" Opacity="0.35" />
+    <DropShadowEffect x:Key="CardShadow" Color="#000000" BlurRadius="24" ShadowDepth="6" Direction="270" Opacity="0.28" />
+
+    <!-- Faint "tech grid" laid over the window background. -->
+    <DrawingBrush x:Key="TechGridBrush" TileMode="Tile" Viewport="0,0,36,36" ViewportUnits="Absolute" Opacity="0.05">
+        <DrawingBrush.Drawing>
+            <GeometryDrawing>
+                <GeometryDrawing.Pen>
+                    <Pen Brush="#FFFFFFFF" Thickness="0.6" />
+                </GeometryDrawing.Pen>
+                <GeometryDrawing.Geometry>
+                    <GeometryGroup>
+                        <LineGeometry StartPoint="0,0" EndPoint="36,0" />
+                        <LineGeometry StartPoint="0,0" EndPoint="0,36" />
+                    </GeometryGroup>
+                </GeometryDrawing.Geometry>
+            </GeometryDrawing>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+
+    <FontFamily x:Key="DisplayFont">Segoe UI Variable Display, Segoe UI</FontFamily>
+    <FontFamily x:Key="TextFont">Segoe UI Variable Text, Segoe UI</FontFamily>
+</ResourceDictionary>

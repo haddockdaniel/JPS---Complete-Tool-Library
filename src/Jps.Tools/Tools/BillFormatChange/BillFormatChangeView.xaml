@@ -1,0 +1,86 @@
+<UserControl x:Class="Jps.Tools.Tools.BillFormatChange.BillFormatChangeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Choose which clients and matters" />
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Change" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <RadioButton x:Name="ScopeClients" GroupName="Scope" Content="Clients only" Margin="0,0,24,0" Checked="OnInputChanged" />
+                        <RadioButton x:Name="ScopeMatters" GroupName="Scope" Content="Matters only" Margin="0,0,24,0" Checked="OnInputChanged" />
+                        <RadioButton x:Name="ScopeBoth" GroupName="Scope" Content="Clients and matters" IsChecked="True" Checked="OnInputChanged" />
+                    </StackPanel>
+
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Only those with (optional, up to two)" />
+                    <Grid Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="240" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <CheckBox x:Name="UseBillTkpr" Content="This billing timekeeper" Checked="OnFilterToggled" Unchecked="OnFilterToggled" Margin="0,4" />
+                        <ComboBox x:Name="BillTkprBox" Grid.Column="1" MaxWidth="440" MinWidth="320" HorizontalAlignment="Left" Margin="0,4"
+                                  DisplayMemberPath="Display" SelectionChanged="OnInputChanged"
+                                  Visibility="{Binding IsChecked, ElementName=UseBillTkpr, Converter={StaticResource Visible}}" />
+                        <CheckBox x:Name="UseOrig" Grid.Row="1" Content="This originating timekeeper" Checked="OnFilterToggled" Unchecked="OnFilterToggled" Margin="0,4" />
+                        <ComboBox x:Name="OrigBox" Grid.Row="1" Grid.Column="1" MaxWidth="440" MinWidth="320" HorizontalAlignment="Left" Margin="0,4"
+                                  DisplayMemberPath="Display" SelectionChanged="OnInputChanged"
+                                  Visibility="{Binding IsChecked, ElementName=UseOrig, Converter={StaticResource Visible}}" />
+                        <CheckBox x:Name="UsePc" Grid.Row="2" Content="This practice class" Checked="OnFilterToggled" Unchecked="OnFilterToggled" Margin="0,4" />
+                        <ComboBox x:Name="PcBox" Grid.Row="2" Grid.Column="1" MaxWidth="440" MinWidth="320" HorizontalAlignment="Left" Margin="0,4"
+                                  DisplayMemberPath="Display" SelectionChanged="OnInputChanged"
+                                  Visibility="{Binding IsChecked, ElementName=UsePc, Converter={StaticResource Visible}}" />
+                    </Grid>
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Closed matters and inactive clients are included. A matter's formats belong to its bill-to, so every matter sharing that bill-to changes too; the review lists them." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Choose the formats to change" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="220" />
+                            <ColumnDefinition Width="40" />
+                            <ColumnDefinition Width="220" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Column="1" Style="{StaticResource FieldLabel}" Text="Change from" />
+                        <TextBlock Grid.Column="3" Style="{StaticResource FieldLabel}" Text="To" />
+
+                        <TextBlock Grid.Row="1" Text="Bill format" VerticalAlignment="Center" />
+                        <ComboBox x:Name="OldBillBox" Grid.Row="1" Grid.Column="1" Margin="0,4" DisplayMemberPath="Display" SelectionChanged="OnInputChanged" />
+                        <ui:SymbolIcon Grid.Row="1" Grid.Column="2" Symbol="ArrowRight24" HorizontalAlignment="Center" />
+                        <ComboBox x:Name="NewBillBox" Grid.Row="1" Grid.Column="3" Margin="0,4" DisplayMemberPath="Display" SelectionChanged="OnInputChanged" />
+
+                        <TextBlock Grid.Row="2" Text="Prebill format" VerticalAlignment="Center" />
+                        <ComboBox x:Name="OldPreBox" Grid.Row="2" Grid.Column="1" Margin="0,4" DisplayMemberPath="Display" SelectionChanged="OnInputChanged" />
+                        <ui:SymbolIcon Grid.Row="2" Grid.Column="2" Symbol="ArrowRight24" HorizontalAlignment="Center" />
+                        <ComboBox x:Name="NewPreBox" Grid.Row="2" Grid.Column="3" Margin="0,4" DisplayMemberPath="Display" SelectionChanged="OnInputChanged" />
+                    </Grid>
+                    <TextBlock x:Name="FormatHint" Style="{StaticResource Hint}"
+                               Text="Pick at least one format to change. When you change both, only clients and bill-tos using both old formats are changed." />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="ReviewButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Review and change formats" Icon="{ui:SymbolIcon DocumentEdit24}" Click="OnReview" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>

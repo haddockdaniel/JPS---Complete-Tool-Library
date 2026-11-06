@@ -1,0 +1,46 @@
+<UserControl x:Class="Jps.Tools.Tools.InactivateUsersTkprs.InactivateUsersTkprsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Choose the cut-off date" />
+                    <DatePicker x:Name="SinceBox" Width="220" HorizontalAlignment="Left" SelectedDateChanged="OnCriteriaChanged" />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="People with no activity on or after this date are listed: no sign-in or change to their employee record, no time or expense entries, no unposted time, and no batches entered or opened." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Choose who to look at" />
+                    <RadioButton x:Name="UsersOnly" GroupName="Who" IsChecked="True" Content="Users only (people who are not timekeepers)" Checked="OnCriteriaChanged" />
+                    <RadioButton x:Name="TkprsOnly" GroupName="Who" Content="Timekeepers only (people who are not users)" Checked="OnCriteriaChanged" />
+                    <RadioButton x:Name="Everyone" GroupName="Who" Content="Users and timekeepers" Checked="OnCriteriaChanged" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="3  Pick who to inactivate" />
+                    <ui:Button x:Name="FindButton" Content="Find inactive people" Icon="{ui:SymbolIcon PeopleSearch24}" Click="OnFind" />
+                    <c:CheckList x:Name="People" Margin="0,12,0,0" Height="320" Placeholder="Search by ID or name"
+                                 Visibility="{Binding ItemsSource, RelativeSource={RelativeSource Self}, Converter={StaticResource Visible}}"
+                                 SelectionChanged="OnSelectionChanged" />
+                    <TextBlock x:Name="ExcludedText" Style="{StaticResource Hint}" Visibility="Collapsed" />
+                    <TextBlock x:Name="SkippedText" Style="{StaticResource Hint}" Visibility="Collapsed" />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="RunButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Inactivate selected" Icon="{ui:SymbolIcon PersonProhibited24}" Click="OnRun" />
+                <ui:Button x:Name="ExcludedButton" DockPanel.Dock="Right" Margin="0,0,8,0" IsEnabled="False"
+                           Content="Who was left out" Icon="{ui:SymbolIcon DocumentSearch24}" Click="OnShowExcluded" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>
