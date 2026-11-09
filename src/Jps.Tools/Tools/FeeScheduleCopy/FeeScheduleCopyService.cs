@@ -75,10 +75,12 @@ namespace Jps.Tools.Tools.FeeScheduleCopy
                     Sql.P("@cls", FeeScheduleDocClass), Sql.P("@from", fromCode));
                 _session.Execute(
                     @"insert into DocumentTree (DTDocID, DTSystemCreated, DTDocClass, DTDocType, DTParentID, DTTitle, DTKeyL, DTKeyT)
-                      values (@id, 'Y', @cls, 'R', @parent, @title, 0, @code)",
+                      values (@id, 'Y', @cls, 'R', @parent, @title,
+                              -- same DTKeyL as the source schedule's node (Juris leaves it NULL on some books, 0 on others)
+                              (select top 1 DTKeyL from DocumentTree where DTDocClass = @cls and DTKeyT = @from order by DTDocID), @code)",
                     Sql.P("@id", docId), Sql.P("@cls", FeeScheduleDocClass),
                     Sql.P("@parent", parent == null ? DefaultFeeScheduleFolder : Convert.ToInt32(parent)),
-                    Sql.P("@title", newDesc.Length > 30 ? newDesc.Substring(0, 30) : newDesc), Sql.P("@code", newCode));
+                    Sql.P("@title", newDesc.Length > 30 ? newDesc.Substring(0, 30) : newDesc), Sql.P("@code", newCode), Sql.P("@from", fromCode));
 
                 // Set-based copies keep every rate exactly as stored (no rounding, no culture formatting).
                 var counts = new RateCounts

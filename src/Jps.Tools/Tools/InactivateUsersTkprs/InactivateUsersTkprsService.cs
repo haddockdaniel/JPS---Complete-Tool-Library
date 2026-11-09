@@ -43,7 +43,7 @@ namespace Jps.Tools.Tools.InactivateUsersTkprs
             ("Unbilled time", new[] { "UnbilledTime.UTTkpr", "UnbilledTime.UTDate", "UnbilledTime.UTPostDate" },
                 "select UTTkpr from UnbilledTime where UTDate >= @Since or UTPostDate >= @Since"),
             ("Billed time", new[] { "BilledTime.BTTkpr", "BilledTime.BTWrkTkpr", "BilledTime.BTDate", "BilledTime.BTPostDate" },
-                "select BTTkpr from BilledTime where BTDate >= @Since or BTPostDate >= @Since union select BTWrkTkpr from BilledTime where BTDate >= @Since or BTPostDate >= @Since"),
+                "select v.t from BilledTime cross apply (values (BTTkpr), (BTWrkTkpr)) v(t) where BTDate >= @Since or BTPostDate >= @Since"),
             ("Time batch entries", new[] { "TimeBatchDetail.TBDTkpr", "TimeBatchDetail.TBDDate", "TimeBatchDetail.TBDPosted" },
                 "select TBDTkpr from TimeBatchDetail where TBDDate >= @Since or TBDPosted <> 'Y'"),
             ("Time entries", new[] { "TimeEntry.TimekeeperSysNbr", "TimeEntry.EntryDate", "TimeEntry.PostDate" },
@@ -110,9 +110,19 @@ namespace Jps.Tools.Tools.InactivateUsersTkprs
             }
             var activity = sources.Count == 0 ? "select cast(null as int) where 1 = 0" : string.Join("\n union ", sources);
 
+            // Collect everyone with activity ONCE into @active, then compare. (Written as "not in (union ...)" SQL Server
+            // re-ran the whole union per employee: 2–3 minutes per search on the test database; collected first, ~3 seconds.)
             var sql = @"
+set nocount on;
+declare @active table (x int primary key);
+insert @active (x) select distinct x from (" + activity + @") act(x) where x is not null;
+-- Employee_Log can hold millions of rows with no index on EmpSysNbr: read it ONCE (one scan, ~2 s) instead of once per
+-- employee (~3 minutes on the test database).
+declare @log table (e int primary key, last datetime);
+insert @log (e, last) select EmpSysNbr, max(DateTimeStamp) from Employee_Log where EmpSysNbr is not null group by EmpSysNbr option (hash group);
+set nocount off;
 select e.EmpSysNbr, e.EmpID, e.EmpName, e.EmpValidAsUser, e.EmpValidAsTkpr,
-       (select max(l.DateTimeStamp) from Employee_Log l where l.EmpSysNbr = e.EmpSysNbr) as LastLog,
+       (select l.last from @log l where l.e = e.EmpSysNbr) as LastLog,
        (select count(distinct m.MatSysNbr) from BillTo b inner join Matter m on m.MatBillTo = b.BillToSysNbr
          where m.MatStatusFlag <> 'C' and b.BillToBillingAtty = e.EmpSysNbr) as OpenBilling,
        (select count(distinct m.MatSysNbr) from MatOrigAtty o inner join Matter m on o.MOrigMat = m.MatSysNbr
@@ -127,8 +137,8 @@ select e.EmpSysNbr, e.EmpID, e.EmpName, e.EmpValidAsUser, e.EmpValidAsTkpr,
 from Employee e
 where e.EmpID <> 'SMGR'
   and " + TypeFilter(filter, "e.") + @"
-  and not exists (select 1 from Employee_Log l where l.EmpSysNbr = e.EmpSysNbr and l.DateTimeStamp >= @Since)
-  and e.EmpSysNbr not in (select x from (" + activity + @") act(x) where x is not null)
+  and not exists (select 1 from @log l where l.e = e.EmpSysNbr and l.last >= @Since)
+  and not exists (select 1 from @active a where a.x = e.EmpSysNbr)
 order by e.EmpID";
 
             foreach (var row in _session.Query(sql, Sql.P("@Since", since.Date)).Rows())

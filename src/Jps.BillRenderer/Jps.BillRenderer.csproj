@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Renders archived Juris bills to PDF in its own process, through Juris's own JurisWrapper.dll loaded at run time from the
+       Juris runtime set that matches the firm's Juris version (JurisRuntime\4x or JurisRuntime\2.6). Nothing Juris-specific
+       is referenced at compile time, so one helper works with every set. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>JPS Bill Renderer</AssemblyName>
+    <RootNamespace>Jps.BillRenderer</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+
+  <!-- ActiveReports 6 runtime license, keyed to this exe's file name ("JPS BILL RENDERER.EXE"). Regenerate if AssemblyName changes. -->
+  <ItemGroup>
+    <EmbeddedResource Include="JPS Bill Renderer.exe.licenses" LogicalName="JPS Bill Renderer.exe.licenses" />
+  </ItemGroup>
+
+</Project>

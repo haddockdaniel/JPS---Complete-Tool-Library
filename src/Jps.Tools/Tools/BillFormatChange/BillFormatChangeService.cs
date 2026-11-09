@@ -32,7 +32,8 @@ namespace Jps.Tools.Tools.BillFormatChange
             var parts = new List<string>();
             if (ChangeBill) parts.Add("bill format " + OldBill + " -> " + NewBill);
             if (ChangePre) parts.Add("prebill format " + OldPre + " -> " + NewPre);
-            return string.Join(", ", parts) + "; scope " + Scope
+            var scope = Scope == FormatScope.ClientsOnly ? "clients only" : Scope == FormatScope.MattersOnly ? "matters only" : "clients and matters";
+            return string.Join(", ", parts) + "; " + scope
                    + (string.IsNullOrEmpty(FilterDescription) ? "" : "; filtered by " + FilterDescription);
         }
 

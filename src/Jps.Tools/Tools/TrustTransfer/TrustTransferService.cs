@@ -184,12 +184,15 @@ namespace Jps.Tools.Tools.TrustTransfer
         private Tuple<short, short> FindPeriod()
         {
             var table = _session.Query(
-                @"select PrdYear, PrdNbr from ActngPeriod
-                  where convert(date, PrdEndDate) = convert(date, dateadd(d, -1, dateadd(m, datediff(m, 0, getdate()) + 1, 0)))");
+                // Period 0 is the firm's whole-year period on some books (1/1–12/31): never post to it.
+                @"select top 1 PrdYear, PrdNbr from ActngPeriod
+                  where PrdNbr > 0
+                    and convert(date, PrdEndDate) = convert(date, dateadd(d, -1, dateadd(m, datediff(m, 0, getdate()) + 1, 0)))
+                  order by PrdYear desc, PrdNbr");
             if (table.Rows.Count == 0)
                 table = _session.Query(
                     @"select top 1 PrdYear, PrdNbr from ActngPeriod
-                      where convert(date, getdate()) between convert(date, PrdStartDate) and convert(date, PrdEndDate)
+                      where PrdNbr > 0 and convert(date, getdate()) between convert(date, PrdStartDate) and convert(date, PrdEndDate)
                       order by PrdEndDate, PrdYear, PrdNbr");
             if (table.Rows.Count == 0) return null;
             return Tuple.Create(Convert.ToInt16(table.Rows[0]["PrdYear"]), Convert.ToInt16(table.Rows[0]["PrdNbr"]));
@@ -227,13 +230,14 @@ namespace Jps.Tools.Tools.TrustTransfer
                 if (matters.Rows.Count != review.MatterCount || total != review.Total)
                     throw new InvalidOperationException("Trust balances in bank " + from + " changed after you reviewed them, so no batch was created. Run the checks again.");
 
-                // TO-bank TrustAccount rows (FK4_TrAdjBatchDetail needs (matter, bank) to exist).
+                // TO-bank TrustAccount rows (FK4_TrAdjBatchDetail needs (matter, bank) to exist) — only for the matters
+                // actually being moved. (The original added a zero row on the TO bank for every matter that ever used the
+                // FROM bank: ~1,500 empty rows for a one-matter transfer on the test database.)
                 _session.Execute(
                     @"insert into TrustAccount (TAMatter, TABank, TADateLastActy, TABalance)
-                      select m.TAMatter, @to, '19000101', 0.00
-                      from (select TAMatter from TrustAccount where TABank = @from
-                            union select TLMatter from TrustLedger where TLBank = @from) m
-                      where not exists (select 1 from TrustAccount t where t.TAMatter = m.TAMatter and t.TABank = @to)",
+                      select m.TLMatter, @to, '19000101', 0.00
+                      from (select TLMatter from TrustLedger where TLBank = @from group by TLMatter having sum(TLAmount) <> 0) m
+                      where not exists (select 1 from TrustAccount t where t.TAMatter = m.TLMatter and t.TABank = @to)",
                     Sql.P("@from", from), Sql.P("@to", to));
 
                 var batch = ClaimTrustBatchNumber();

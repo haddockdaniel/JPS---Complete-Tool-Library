@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -158,7 +158,8 @@ namespace Jps.Tools.Tools.SplitMatterCloser
             public string Reasons;
 
             public string Line => (IsChild ? "Child" : "Parent") + ": Client - " + ClientCode + " / " + ClientName + " Matter - " + MatterCode + " / " + MatterName
-                                  + (IsChild ? " Percent: " + Percent.ToString("0.####", CultureInfo.InvariantCulture) + "%" : "");
+                                  // The parent's own share shows too when it splits to itself (e.g. Parent 50% / Child 50%).
+                                  + (IsChild || Percent > 0 ? " Percent: " + Percent.ToString("0.####", CultureInfo.InvariantCulture) + "%" : "");
         }
 
         /// <summary>
@@ -168,7 +169,9 @@ namespace Jps.Tools.Tools.SplitMatterCloser
         public SplitCloseResult Close(IList<int> parents, DateTime today)
         {
             var result = new SplitCloseResult { NotClosed = NewNotClosedTable() };
-            foreach (var parent in parents)
+            // Families that share a matter (e.g. two matters split to each other, each the parent of the other) can only be
+            // closed together: they are grouped and each group is checked and closed in one transaction, all or nothing.
+            foreach (var group in GroupLinkedFamilies(parents))
             {
                 try
                 {
@@ -176,54 +179,79 @@ namespace Jps.Tools.Tools.SplitMatterCloser
                     List<Member> blocked = null;
                     _session.InTransaction(() =>
                     {
-                        var members = LoadFamily(parent);
-                        if (members.Count(m => m.IsChild) == 0)
+                        var families = group.ToDictionary(p => p, LoadFamily);
+                        var all = families.Values.SelectMany(f => f).GroupBy(m => m.MatSysNbr).Select(g => g.First()).ToList();
+                        if (families.Values.Any(f => f.Count(m => m.IsChild) == 0))
                         {
-                            blocked = members;
-                            foreach (var m in members) m.Reasons = "The split no longer exists (it was removed after the list was shown)";
+                            blocked = all;
+                            foreach (var m in all) m.Reasons = "The split no longer exists (it was removed after the list was shown)";
                             return;
                         }
-                        LoadBalances(parent, members);
-                        if (members.Any(m => m.Reasons.Length > 0))
+                        LoadBalances(group, all);
+                        if (all.Any(m => m.Reasons.Length > 0))
                         {
-                            blocked = members;
-                            foreach (var m in members.Where(m => m.Reasons.Length == 0))
+                            blocked = all;
+                            foreach (var m in all.Where(m => m.Reasons.Length == 0))
                                 m.Reasons = "Clear, but left open because another matter in this split family isn't";
                             return;
                         }
-                        CloseFamily(parent, members, today);
-                        closedCount = members.Count;
+                        foreach (var family in families)
+                            CloseFamily(family.Key, family.Value, today);
+                        closedCount = all.Count;
                     });
                     if (blocked != null)
                     {
-                        result.FamiliesSkipped++;
+                        result.FamiliesSkipped += group.Count;
                         AddNotClosed(result.NotClosed, blocked);
                     }
                     else
                     {
-                        result.FamiliesClosed++;
+                        result.FamiliesClosed += group.Count;
                         result.MattersClosed += closedCount;
                     }
                 }
                 catch (Exception ex) when (ex is SqlException || ex is InvalidOperationException)
                 {
-                    // That family was rolled back; record it and carry on with the others.
-                    result.FamiliesSkipped++;
-                    var row = result.NotClosed.NewRow();
-                    var label = ParentLabel(parent);
-                    row["Parent Client Code"] = label.Item1;
-                    row["Parent Matter Code"] = label.Item2;
-                    row["Client Code"] = label.Item1;
-                    row["Matter Code"] = label.Item2;
-                    row["Role"] = "Parent";
-                    row["Why It Wasn't Closed"] = "Could not be closed: " + ex.Message;
-                    result.NotClosed.Rows.Add(row);
+                    // That group was rolled back; record it and carry on with the others.
+                    result.FamiliesSkipped += group.Count;
+                    foreach (var parent in group)
+                    {
+                        var row = result.NotClosed.NewRow();
+                        var label = ParentLabel(parent);
+                        row["Parent Client Code"] = label.Item1;
+                        row["Parent Matter Code"] = label.Item2;
+                        row["Client Code"] = label.Item1;
+                        row["Matter Code"] = label.Item2;
+                        row["Role"] = "Parent";
+                        row["Why It Wasn't Closed"] = "Could not be closed: " + ex.Message;
+                        result.NotClosed.Rows.Add(row);
+                    }
                 }
             }
 
             _session.WriteUtilityLog("JPS Split Matter Closer: closed " + result.FamiliesClosed + " split famil" + (result.FamiliesClosed == 1 ? "y" : "ies")
                                      + " (" + result.MattersClosed + " matters); " + result.FamiliesSkipped + " not closed.");
             return result;
+        }
+
+        /// <summary>Groups the chosen parents whose families share any matter (union-find over each family's matters).</summary>
+        private List<List<int>> GroupLinkedFamilies(IList<int> parents)
+        {
+            var owner = new Dictionary<int, int>();   // parent -> group root
+            int Root(int p) { while (owner[p] != p) p = owner[p] = owner[owner[p]]; return p; }
+            var firstParentOfMatter = new Dictionary<int, int>();
+            foreach (var parent in parents.Distinct())
+            {
+                owner[parent] = parent;
+                var matters = _session.Query("select SplitToMat from SplitBill where SplitFromMat = @p", Sql.P("@p", parent))
+                    .Rows().Select(r => Convert.ToInt32(r[0])).Concat(new[] { parent });
+                foreach (var m in matters)
+                {
+                    if (firstParentOfMatter.TryGetValue(m, out var other)) owner[Root(parent)] = Root(other);
+                    else firstParentOfMatter[m] = parent;
+                }
+            }
+            return parents.Distinct().GroupBy(Root).Select(g => g.ToList()).ToList();
         }
 
         /// <summary>The parent matter's client and matter code for the report (blank if it can't be read).</summary>
@@ -275,17 +303,18 @@ namespace Jps.Tools.Tools.SplitMatterCloser
         /// prepaid, trust in any bank, open prebills). The rules' "Splits" count is replaced by the member's splits OUTSIDE
         /// this family, because the family's own SplitBill rows are removed when it closes.
         /// </summary>
-        private void LoadBalances(int parent, List<Member> members)
+        private void LoadBalances(IList<int> groupParents, List<Member> members)
         {
             var ids = members.Select(m => m.MatSysNbr).ToList();
-            var ps = new List<SqlParameter> { Sql.P("@p", parent) };
+            var ps = new List<SqlParameter>();
             var mats = Sql.InList("m", ids.Cast<object>(), ps);
+            var groupList = Sql.InList("g", groupParents.Cast<object>(), ps);
             // updlock/holdlock on the member matter rows (MatPPDBalance is only in the clustered index, so the real rows are
             // locked): nothing can change their status, and a posting already updating one finishes first, until commit.
             var otherSplits = _session.Query(
                 @"select m.MatSysNbr, m.MatPPDBalance,
                          (select count(*) from SplitBill x where (x.SplitFromMat = m.MatSysNbr or x.SplitToMat = m.MatSysNbr)
-                             and x.SplitFromMat <> @p) as OtherSplits
+                             and x.SplitFromMat not in " + groupList + @") as OtherSplits
                   from Matter m with (updlock, holdlock) where m.MatSysNbr in " + mats, ps.ToArray())
                 .Rows().ToDictionary(r => Convert.ToInt32(r["MatSysNbr"]), r => Convert.ToInt32(r["OtherSplits"]));
 
@@ -300,7 +329,10 @@ namespace Jps.Tools.Tools.SplitMatterCloser
                 var row = check.Row;
                 row["Splits"] = otherSplits.TryGetValue(member.MatSysNbr, out var n) ? n : 0;
                 member.Balances = row;
-                member.Reasons = MatterCloseRules.Reasons(row);
+                // Here the "split" reason means a split family that wasn't chosen in this run, so say that plainly.
+                member.Reasons = MatterCloseRules.Reasons(row).Replace(
+                    "part of a split-billing arrangement (remove the split first)",
+                    "also in another split family that wasn't chosen (choose that family too, so they close together)");
             }
         }
 
@@ -310,13 +342,13 @@ namespace Jps.Tools.Tools.SplitMatterCloser
             var parentMember = members.First(m => !m.IsChild);
 
             if (_session.ExecuteRows(
-                    "update Matter set MatStatusFlag = 'C', MatLockFlag = '3', MatDateClosed = @today, MatSplitMethod = '0' where MatSysNbr = @p",
+                    "update Matter set MatStatusFlag = 'C', MatLockFlag = '3', MatDateClosed = case when MatStatusFlag = 'C' then MatDateClosed else @today end, MatSplitMethod = '0' where MatSysNbr = @p",
                     Sql.P("@p", parent), Sql.P("@today", today)) != 1)
                 throw new InvalidOperationException("Parent matter " + parentMember.ClientCode + "/" + parentMember.MatterCode + " could not be updated, so nothing in this family was changed.");
 
             var ps = new List<SqlParameter> { Sql.P("@today", today) };
             var list = Sql.InList("c", children.Select(c => (object)c.MatSysNbr), ps);
-            if (_session.ExecuteRows("update Matter set MatStatusFlag = 'C', MatLockFlag = '3', MatDateClosed = @today where MatSysNbr in " + list, ps.ToArray()) != children.Count)
+            if (_session.ExecuteRows("update Matter set MatStatusFlag = 'C', MatLockFlag = '3', MatDateClosed = case when MatStatusFlag = 'C' then MatDateClosed else @today end where MatSysNbr in " + list, ps.ToArray()) != children.Count)
                 throw new InvalidOperationException("Not every child matter of " + parentMember.ClientCode + "/" + parentMember.MatterCode + " could be updated, so nothing in this family was changed.");
 
             var header = "Split Removed via JPS - Split Matter Closer\r\nPerformed on " + today.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture) + "\r\n" + parentMember.Line;

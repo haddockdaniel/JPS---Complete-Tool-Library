@@ -102,7 +102,13 @@ namespace Jps.Tools.Tools.BillFormatChange
         {
             if (ReviewButton == null || NewPreBox == null) return; // during InitializeComponent
             var problem = Problem();
-            FormatHint.Text = problem ?? "When you change both formats, only clients and bill-tos using both old formats are changed.";
+            string oldBill = Format(OldBillBox), oldPre = Format(OldPreBox);
+            FormatHint.Text = problem
+                ?? (oldBill != null && oldPre != null
+                    ? "Both formats are changing, so only clients and bill-tos using bill format " + oldBill + " AND prebill format " + oldPre + " are changed."
+                    : oldBill != null
+                        ? "Clients and bill-tos using bill format " + oldBill + " are changed to " + Format(NewBillBox) + ". Prebill formats are left alone."
+                        : "Clients and bill-tos using prebill format " + oldPre + " are changed to " + Format(NewPreBox) + ". Bill formats are left alone.");
             ReviewButton.IsEnabled = problem == null;
         }
 

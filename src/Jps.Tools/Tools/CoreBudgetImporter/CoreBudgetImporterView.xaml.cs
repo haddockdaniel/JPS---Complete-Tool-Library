@@ -158,8 +158,10 @@ namespace Jps.Tools.Tools.CoreBudgetImporter
 
             if (plan.FileErrors.Rows.Count > 0)
             {
-                SummaryText.Text = rows + " row(s) read. " + plan.FileErrors.Rows.Count + " row(s) have problems, so nothing can be imported yet.";
-                Frame.ShowWarning(plan.FileErrors.Rows.Count + " row(s) in the file have problems. Click Problems for the list (by spreadsheet row), fix them, save the file and click Check again. No budgets were changed.");
+                // Count what the Problems list shows (row problems plus any duplicate-line / per-matter problems).
+                var shown = (plan.Errors ?? plan.FileErrors).Rows.Count;
+                SummaryText.Text = rows + " row(s) read. " + shown + " problem(s) found, so nothing can be imported yet.";
+                Frame.ShowWarning(shown + " problem(s) found in the file. Click Problems for the list (by spreadsheet row), fix them, save the file and click Check again. No budgets were changed.");
                 return;
             }
             if (plan.Matters.Count == 0)

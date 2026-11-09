@@ -1,13 +1,13 @@
 using System;
+using System.Diagnostics;
 using System.IO;
-using System.Runtime.CompilerServices;
-using System.Text;
+using System.Threading.Tasks;
 using Jps.Core.Data;
 
 namespace Jps.Tools.Tools.ArchiveBillPrint
 {
     /// <summary>Turns one archived Juris invoice into a PDF file.</summary>
-    internal interface IArchiveBillRenderer
+    internal interface IArchiveBillRenderer : IDisposable
     {
         /// <summary>False when this install can't render archived bills; <see cref="UnavailableReason"/> says why.</summary>
         bool IsAvailable { get; }
@@ -27,102 +27,124 @@ namespace Jps.Tools.Tools.ArchiveBillPrint
 
     internal static class ArchiveBillRenderer
     {
-        public static IArchiveBillRenderer Create(JurisSession session) => new JurisArchiveRenderer(session.Company.Code);
+        public static IArchiveBillRenderer Create(JurisSession session) => new HelperProcessRenderer(session.Company.Code);
     }
 
     /// <summary>
-    /// Renders exactly as the original tool did, through Juris's own server library (JurisSVR21) and the ActiveReports 6
-    /// runtime that the original shipped: PrintPrebill.PreviewArchiveByBillNumber, then the stored PDF for PDF-type archives,
-    /// otherwise the rebuilt ActiveReports report exported with PdfExport (PDF 1.3, image quality 100).
-    /// The ActiveReports runtime license is the embedded "JPS Tool Library.exe.licenses" resource in Jps.Shell.
-    /// Call every member from the same STA thread.
+    /// Renders through "JPS Bill Renderer.exe", a separate process that calls Juris's own JurisWrapper.dll (4.32 set, backwards
+    /// compatible) exactly as the original Archive Bill Bulk Print Tool did: logon to the company, then GetBillImage per invoice
+    /// (stored PDF for PDF archives, otherwise the ActiveReports report exported to PDF). The helper carries its own
+    /// ActiveReports runtime license. Running it out of process keeps the memory-heavy rendering, and any crash in it, out of
+    /// the Tool Library.
     /// </summary>
-    internal sealed class JurisArchiveRenderer : IArchiveBillRenderer
+    internal sealed class HelperProcessRenderer : IArchiveBillRenderer
     {
-        private const int ArchiveTypePdf = 2;            // JEnumerations.JurisBillArchiveType.jbatpdf
-        private readonly string _companyCode;
-        private bool _open;
+        private const string HelperName = "JPS Bill Renderer.exe";
+        private static readonly TimeSpan PerInvoiceTimeout = TimeSpan.FromMinutes(5);
+        private static readonly TimeSpan LogonTimeout = TimeSpan.FromMinutes(2);
 
-        public JurisArchiveRenderer(string companyCode)
+        // Juris/ActiveReports leak memory over long runs; a fresh helper gets all of it back. Recycle after this many invoices,
+        // or sooner once the helper's memory passes the limit (it is a 32-bit process, so it can't grow much past 2 GB).
+        private const int RecycleAfterInvoices = 100;
+        private const long RecycleAboveBytes = 1L * 1024 * 1024 * 1024;
+
+        private readonly string _companyCode;
+        private Process _process;
+        private int _renderedByThisHelper;
+
+        public HelperProcessRenderer(string companyCode)
         {
             _companyCode = companyCode;
         }
 
+        private static string HelperPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, HelperName);
+
         public bool IsAvailable =>
-            File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ActiveReports6.dll"))
-            && File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "JurisSVR21.dll"));
+            File.Exists(HelperPath) && File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "JurisWrapper.dll"));
 
         public string UnavailableReason =>
-            "the Juris report files (ActiveReports6.dll, JurisSVR21.dll) are missing from the JPS Tool Library folder. Reinstall the tool library.";
+            "the Juris bill printing files (" + HelperName + ", JurisWrapper.dll) are missing from the JPS Tool Library folder. Reinstall the tool library.";
 
         public void Open()
         {
-            if (_open) return;
-            try
+            if (_process != null && !_process.HasExited) return;
+            var start = new ProcessStartInfo(HelperPath, "--company \"" + _companyCode + "\"")
             {
-                LogOn();
-            }
-            catch (Exception ex)
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+                WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory,
+            };
+            _process = Process.Start(start);
+            var first = ReadLine(LogonTimeout) ?? "LOGON-FAILED\tThe bill printing helper stopped before it could log on.";
+            if (first != "READY")
             {
-                throw new ArchiveRenderException("There was an error logging into your books. Check your license. (" + ex.Message + ")", ex);
+                var why = first.StartsWith("LOGON-FAILED\t") ? first.Substring(13) : first;
+                Dispose();
+                throw new ArchiveRenderException("There was an error logging into your books. Check your license. (" + why + ")");
             }
-            _open = true;
-        }
-
-        // Kept out of Open() so a missing Juris assembly surfaces as an exception Open() can describe.
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private void LogOn()
-        {
-            var server = new JurisSVR.JurisEntryPoint().JurisServer;
-            if (server == null)
-                throw new InvalidOperationException("the Juris server object couldn't be created");
-            server.Companies.CurrentCompany = "Company" + _companyCode;
-            server.DataConnections.Datamode = (JDataEngine.JDataBase.enmDatamode)0;
-            server.OpenDatabase(string.Empty, false);
         }
 
         public void RenderToFile(int billNumber, string path)
         {
-            if (!_open) Open();
-            var prebill = new JurisSVR.PrintPrebill();
+            if (_process != null && !_process.HasExited && NeedsRecycle())
+                Dispose();
+            if (_process == null || _process.HasExited)
+            {
+                Open();
+                _renderedByThisHelper = 0;
+            }
+            _renderedByThisHelper++;
+            _process.StandardInput.WriteLine(billNumber + "\t" + path);
+            _process.StandardInput.Flush();
+            var answer = ReadLine(PerInvoiceTimeout);
+            if (answer == null)
+            {
+                Dispose(); // hung or crashed: start a fresh helper for the next invoice
+                throw new ArchiveRenderException("Juris stopped responding while printing this invoice.");
+            }
+            if (answer != "OK")
+                throw new ArchiveRenderException(answer.StartsWith("FAIL\t") ? answer.Substring(5) : answer);
+        }
+
+        private bool NeedsRecycle()
+        {
+            if (_renderedByThisHelper >= RecycleAfterInvoices) return true;
             try
             {
-                var result = (int)prebill.PreviewArchiveByBillNumber(billNumber, false);
-                if (result != 0)
-                    throw new ArchiveRenderException("Juris couldn't load its archive (result code " + result + ")");
+                _process.Refresh();
+                return _process.PrivateMemorySize64 > RecycleAboveBytes;
+            }
+            catch (InvalidOperationException)
+            {
+                return true;
+            }
+        }
 
-                if ((int)prebill.ArchiveType == ArchiveTypePdf)
+        /// <summary>One line from the helper, or null if it exits or doesn't answer in time.</summary>
+        private string ReadLine(TimeSpan timeout)
+        {
+            var read = Task.Run(() => _process.StandardOutput.ReadLine());
+            return read.Wait(timeout) ? read.Result : null;
+        }
+
+        public void Dispose()
+        {
+            if (_process == null) return;
+            try
+            {
+                if (!_process.HasExited)
                 {
-                    var image = prebill.ArchiveImage;
-                    if (string.IsNullOrEmpty(image))
-                        throw new ArchiveRenderException("the archive image is empty");
-                    // The archive holds the PDF bytes as an ANSI string (the original wrote it with VB FilePut, i.e. ANSI bytes).
-                    File.WriteAllBytes(path, Encoding.Default.GetBytes(image));
-                }
-                else
-                {
-                    var report = prebill.ReportObject;
-                    if (report == null)
-                        throw new ArchiveRenderException("Juris didn't return a report for the archive");
-                    report.Run(false);
-                    var pdf = new DataDynamics.ActiveReports.Export.Pdf.PdfExport
-                    {
-                        Version = DataDynamics.ActiveReports.Export.Pdf.PdfVersion.Pdf13,
-                        ImageQuality = (DataDynamics.ActiveReports.Export.Pdf.ImageQuality)100,
-                    };
-                    try
-                    {
-                        pdf.Export(report.Document, path);
-                    }
-                    finally
-                    {
-                        pdf.Dispose();
-                    }
+                    try { _process.StandardInput.WriteLine(); _process.StandardInput.Flush(); } catch (IOException) { }
+                    if (!_process.WaitForExit(5000)) _process.Kill();
                 }
             }
+            catch (InvalidOperationException) { /* already gone */ }
             finally
             {
-                (prebill as IDisposable)?.Dispose();
+                _process.Dispose();
+                _process = null;
             }
         }
     }

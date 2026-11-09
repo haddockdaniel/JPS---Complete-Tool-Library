@@ -286,6 +286,8 @@ namespace Jps.Tools.Tools.ArchiveBillPrint
                 CancelButton.Visibility = Visibility.Collapsed;
                 _cancel.Dispose();
                 _cancel = null;
+                // Close the bill printing helper so its memory goes back to Windows straight away.
+                await System.Threading.Tasks.Task.Run(() => renderer.Dispose());
             }
             if (outcome == null) return; // error already shown
 

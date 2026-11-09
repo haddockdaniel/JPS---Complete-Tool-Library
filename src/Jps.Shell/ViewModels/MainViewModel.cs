@@ -211,7 +211,12 @@ namespace Jps.Shell.ViewModels
                     ConnectionText = "No Juris companies on this PC";
                     return;
                 }
-                SelectedCompany = companies.FirstOrDefault(c => c.IsDefault) ?? companies[0];
+                // Support/testing: "JPS Tool Library.exe --company Juris9999002" opens on that company's database.
+                var args = Environment.GetCommandLineArgs();
+                var i = Array.IndexOf(args, "--company");
+                var wanted = i >= 0 && i + 1 < args.Length ? args[i + 1] : null;
+                SelectedCompany = companies.FirstOrDefault(c => wanted != null && string.Equals(c.DatabaseName, wanted, StringComparison.OrdinalIgnoreCase))
+                                  ?? companies.FirstOrDefault(c => c.IsDefault) ?? companies[0];
             }
             catch (Exception ex)
             {

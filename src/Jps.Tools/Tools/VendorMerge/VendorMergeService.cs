@@ -64,7 +64,7 @@ namespace Jps.Tools.Tools.VendorMerge
             t.Columns.Add("What Happens");
             t.Rows.Add("Vouchers", N("Vouchers"), "Moved to " + r.KeepCode);
             t.Rows.Add("Checks", N("Checks"), "Moved to " + r.KeepCode);
-            t.Rows.Add("Unposted voucher batch lines", N("BatchLines"), "Moved to " + r.KeepCode);
+            t.Rows.Add("Voucher batch lines", N("BatchLines"), "Moved to " + r.KeepCode);
             t.Rows.Add("Matter disbursement history", N("MatterDisbursements"), "Moved to " + r.KeepCode);
             t.Rows.Add("Recurring voucher templates", N("RecurringTemplates"), "Moved to " + r.KeepCode);
             t.Rows.Add("Vendor notes", N("Notes"), N("NoteClashes") == 0

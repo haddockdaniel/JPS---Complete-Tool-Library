@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -285,11 +285,11 @@ namespace Jps.Tools.Tools.MatterStatusLock
                 return;
             }
 
-            var subtitle = plan.ChangeCount.ToString("N0") + " matters will be updated." +
+            var subtitle = Matters(plan.ChangeCount) + " will be updated." +
                            (plan.BlockedCount > 0 ? " " + plan.BlockedCount.ToString("N0") + " can't be closed and will be left as they are." : "") +
                            " Check the \"What will happen\" column, then continue.";
             if (!ReportWindow.Confirm(this, "Matters to update", MatterStatusLockService.PreviewTable(plan), subtitle,
-                    "Update " + plan.ChangeCount.ToString("N0") + " matters"))
+                    "Update " + Matters(plan.ChangeCount)))
                 return;
 
             var applied = await Frame.RunAsync("Updating matters…", () => _service.Apply(request, plan));
@@ -297,7 +297,7 @@ namespace Jps.Tools.Tools.MatterStatusLock
             if (request.Mode == SelectionMode.ClientAll || request.Mode == SelectionMode.ClientSpecific)
                 await LoadMatters(); // the matter list shows statuses, so reload it (this clears the picks)
 
-            var done = "Updated " + (applied.Updated + applied.Closed).ToString("N0") + " matters" +
+            var done = "Updated " + Matters(applied.Updated + applied.Closed) +
                        (request.NewStatus == "C" ? " (" + applied.Closed.ToString("N0") + " closed)" : "") + ".";
             var notClosed = plan.BlockedCount + applied.LeftOpen;
             if (notClosed == 0)
@@ -305,7 +305,7 @@ namespace Jps.Tools.Tools.MatterStatusLock
                 Frame.ShowSuccess(done);
                 return;
             }
-            Frame.ShowWarning(done + " " + notClosed.ToString("N0") + " matters still have open items or split billing and couldn't be closed." +
+            Frame.ShowWarning(done + " " + Matters(notClosed) + " still have open items or split billing and couldn't be closed." +
                               (applied.LeftOpen > 0 ? " (" + applied.LeftOpen.ToString("N0") + " of them had new activity after the review.)" : ""));
             if (plan.BlockedCount > 0 && await Dialogs.ConfirmAsync("Show the matters that couldn't be closed?",
                     "Some matters still have open items or split billing and can't be closed. Would you like to see the details?", "Show details"))
@@ -326,5 +326,6 @@ namespace Jps.Tools.Tools.MatterStatusLock
                 t.Rows.Add(r.RowNumber, r.ClientCode, r.MatterCode, r.Problem);
             return t;
         }
+        private static string Matters(int n) => n.ToString("N0") + (n == 1 ? " matter" : " matters");
     }
 }

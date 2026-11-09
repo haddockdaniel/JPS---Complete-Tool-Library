@@ -44,12 +44,16 @@ namespace Jps.Tools.Tools.MatterCloser
             new HashSet<string> { "UnbilledTimeAmt", "UnbilledExpAmt", "AR", "PPD", "Trust", "TrustLedger" };
 
         /// <summary>
-        /// One "union all" branch of B: <paramref name="matter"/> is the matter-key expression, <paramref name="from"/> the
-        /// rest of the SELECT (from/where/group by), <paramref name="values"/> pairs of column name and expression. Columns
-        /// not named are zero, so a branch can never put a value in the wrong position.
+        /// One "union all" branch of B: <paramref name="matter"/> is the matter-key column, <paramref name="from"/> the
+        /// FROM part, <paramref name="where"/> its filter (or null), <paramref name="values"/> pairs of column name and
+        /// aggregate expression. Every branch is limited to the matters in <paramref name="scope"/> (a temp table with a
+        /// MatSysNbr column) BEFORE it aggregates, so only the matters being checked are read, never the whole firm.
+        /// Columns not named are zero, so a branch can never put a value in the wrong position.
         /// </summary>
-        private static string Branch(string matter, string from, params string[] values)
+        private static string Branch(string scope, string matter, string from, string where, params string[] values)
         {
+            from += "\n          where " + matter + " in (select MatSysNbr from " + scope + ")" + (where == null ? "" : " and (" + where + ")") +
+                    "\n          group by " + matter;
             var map = new Dictionary<string, string>();
             for (var i = 0; i < values.Length; i += 2)
             {
@@ -73,56 +77,58 @@ namespace Jps.Tools.Tools.MatterCloser
         /// cash receipt allocations and A/R lines flagged pending), prepaid balance, trust balance per bank in TrustAccount and
         /// in TrustLedger (TrustBanks / TrustLedgerBanks = banks with a non-zero balance, so balances in two banks that
         /// cancel out still block), unposted trust adjustments, open prebills (as billed or split-to matter) and split billing.
+        /// Only the matters in <paramref name="scope"/> (a temp table with a MatSysNbr column) are read.
         /// </summary>
-        public static string Balances(bool hasSuite)
+        public static string Balances(bool hasSuite, string scope)
         {
+            string B(string matter, string from, string where, params string[] values) => Branch(scope, matter, from, where, values);
             var branches = new List<string>
             {
-                Branch("MatSysNbr", "from Matter", "PPD", "MatPPDBalance"),
-                Branch("ARMMatter", "from ARMatAlloc where ARMBalDue <> 0 group by ARMMatter", "OpenBills", "count(*)", "AR", "sum(ARMBalDue)"),
-                Branch("ARMMatter", "from ARMatAlloc where ARMPendingFlag = 'Y' group by ARMMatter", "PendingCash", "count(*)"),
-                Branch("UTMatter", "from UnbilledTime group by UTMatter", "UnbilledTime", "count(*)", "UnbilledTimeAmt", "sum(UTAmount)"),
-                Branch("UEMatter", "from UnbilledExpense group by UEMatter", "UnbilledExp", "count(*)", "UnbilledExpAmt", "sum(UEAmount)"),
+                B("MatSysNbr", "from Matter", null, "PPD", "sum(MatPPDBalance)"),
+                B("ARMMatter", "from ARMatAlloc", "ARMBalDue <> 0", "OpenBills", "count(*)", "AR", "sum(ARMBalDue)"),
+                B("ARMMatter", "from ARMatAlloc", "ARMPendingFlag = 'Y'", "PendingCash", "count(*)"),
+                B("UTMatter", "from UnbilledTime", null, "UnbilledTime", "count(*)", "UnbilledTimeAmt", "sum(UTAmount)"),
+                B("UEMatter", "from UnbilledExpense", null, "UnbilledExp", "count(*)", "UnbilledExpAmt", "sum(UEAmount)"),
             };
             if (hasSuite)
             {
                 // Suite: a batch line created from an entry is counted through the entry (EntryStatus 0-6 = not yet posted).
-                branches.Add(Branch("TBDMatter", @"from TimeBatchDetail where TBDPosted <> 'Y'
-            and not exists (select 1 from TimeEntryLink L where L.TBDID = TimeBatchDetail.TBDID) group by TBDMatter", "UnpostedTime", "count(*)"));
-                branches.Add(Branch("MatterSysNbr", "from TimeEntry where EntryStatus <= 6 and MatterSysNbr is not null group by MatterSysNbr", "UnpostedTime", "count(*)"));
-                branches.Add(Branch("EBDMatter", @"from ExpBatchDetail where EBDPosted <> 'Y'
-            and not exists (select 1 from ExpenseEntryLink L where L.EBDID = ExpBatchDetail.EBDID) group by EBDMatter", "UnpostedExp", "count(*)"));
-                branches.Add(Branch("MatterSysNbr", "from ExpenseEntry where EntryStatus <= 6 and MatterSysNbr is not null group by MatterSysNbr", "UnpostedExp", "count(*)"));
+                branches.Add(B("TBDMatter", "from TimeBatchDetail",
+                    "TBDPosted <> 'Y' and not exists (select 1 from TimeEntryLink L where L.TBDID = TimeBatchDetail.TBDID)", "UnpostedTime", "count(*)"));
+                branches.Add(B("MatterSysNbr", "from TimeEntry", "EntryStatus <= 6", "UnpostedTime", "count(*)"));
+                branches.Add(B("EBDMatter", "from ExpBatchDetail",
+                    "EBDPosted <> 'Y' and not exists (select 1 from ExpenseEntryLink L where L.EBDID = ExpBatchDetail.EBDID)", "UnpostedExp", "count(*)"));
+                branches.Add(B("MatterSysNbr", "from ExpenseEntry", "EntryStatus <= 6", "UnpostedExp", "count(*)"));
             }
             else
             {
-                branches.Add(Branch("TBDMatter", "from TimeBatchDetail where TBDPosted <> 'Y' group by TBDMatter", "UnpostedTime", "count(*)"));
-                branches.Add(Branch("EBDMatter", "from ExpBatchDetail where EBDPosted <> 'Y' group by EBDMatter", "UnpostedExp", "count(*)"));
+                branches.Add(B("TBDMatter", "from TimeBatchDetail", "TBDPosted <> 'Y'", "UnpostedTime", "count(*)"));
+                branches.Add(B("EBDMatter", "from ExpBatchDetail", "EBDPosted <> 'Y'", "UnpostedExp", "count(*)"));
             }
             branches.AddRange(new[]
             {
-                Branch("VBMMatter", @"from VoucherBatchMatDist inner join VoucherBatchDetail on VBDBatch = VBMBatch and VBDRecNbr = VBMRecNbr
-            where VBDPosted <> 'Y' group by VBMMatter", "UnpostedVouchers", "count(*)"),
+                B("VBMMatter", "from VoucherBatchMatDist inner join VoucherBatchDetail on VBDBatch = VBMBatch and VBDRecNbr = VBMRecNbr",
+                    "VBDPosted <> 'Y'", "UnpostedVouchers", "count(*)"),
                 // Trust/refund vouchers carry the matter on the voucher itself (no matter distribution lines).
-                Branch("VBDMatter", "from VoucherBatchDetail where VBDPosted <> 'Y' and VBDMatter is not null group by VBDMatter", "UnpostedVouchers", "count(*)"),
-                Branch("VMMatter", @"from Voucher inner join VoucherMatDist on VMVoucher = VchVoucherNbr
-            where VchStatus = 'O' and VMAmount - VMAmountPaid <> 0 group by VMMatter", "OpenVouchers", "count(*)"),
-                Branch("VchMatter", "from Voucher where VchStatus = 'O' and VchMatter is not null group by VchMatter", "OpenVouchers", "count(*)"),
+                B("VBDMatter", "from VoucherBatchDetail", "VBDPosted <> 'Y'", "UnpostedVouchers", "count(*)"),
+                B("VMMatter", "from Voucher inner join VoucherMatDist on VMVoucher = VchVoucherNbr",
+                    "VchStatus = 'O' and VMAmount - VMAmountPaid <> 0", "OpenVouchers", "count(*)"),
+                B("VchMatter", "from Voucher", "VchStatus = 'O'", "OpenVouchers", "count(*)"),
                 // Unposted cash receipts allocated to the matter (A/R, fee, expense, prepaid or trust).
-                Branch("CRAMatter", "from CRARAlloc inner join CashReceipt on CRBatch = CRABatch and CRRecNbr = CRARecNbr where CRPosted <> 'Y' group by CRAMatter", "PendingCash", "count(*)"),
-                Branch("CRFMatter", "from CRFeeAlloc inner join CashReceipt on CRBatch = CRFBatch and CRRecNbr = CRFRecNbr where CRPosted <> 'Y' group by CRFMatter", "PendingCash", "count(*)"),
-                Branch("CREMatter", "from CRExpAlloc inner join CashReceipt on CRBatch = CREBatch and CRRecNbr = CRERecNbr where CRPosted <> 'Y' group by CREMatter", "PendingCash", "count(*)"),
-                Branch("CRPMatter", "from CRPPDAlloc inner join CashReceipt on CRBatch = CRPBatch and CRRecNbr = CRPRecNbr where CRPosted <> 'Y' group by CRPMatter", "PendingCash", "count(*)"),
-                Branch("CRTMatter", "from CRTrustAlloc inner join CashReceipt on CRBatch = CRTBatch and CRRecNbr = CRTRecNbr where CRPosted <> 'Y' group by CRTMatter", "PendingCash", "count(*)"),
-                Branch("TAMatter", "from TrustAccount group by TAMatter", "Trust", "sum(TABalance)", "TrustBanks", "sum(case when TABalance <> 0 then 1 else 0 end)"),
-                Branch("TLMatter", "from (select TLMatter, sum(TLAmount) as Amt from TrustLedger group by TLMatter, TLBank) TL group by TLMatter",
-                    "TrustLedger", "sum(Amt)", "TrustLedgerBanks", "sum(case when Amt <> 0 then 1 else 0 end)"),
-                Branch("TABDMatter", "from TrAdjBatchDetail where TABDPosted <> 'Y' group by TABDMatter", "UnpostedTrustAdj", "count(*)"),
-                Branch("PBMMatter", "from PreBillMatter inner join PreBill on PBSysNbr = PBMPreBill group by PBMMatter", "Prebills", "count(*)"),
-                Branch("PBSTFromMatter", "from PreBillSplitTo inner join PreBill on PBSysNbr = PBSTPreBill group by PBSTFromMatter", "Prebills", "count(*)"),
-                Branch("PBSTToMatter", "from PreBillSplitTo inner join PreBill on PBSysNbr = PBSTPreBill group by PBSTToMatter", "Prebills", "count(*)"),
-                Branch("SplitFromMat", "from SplitBill group by SplitFromMat", "Splits", "count(*)"),
-                Branch("SplitToMat", "from SplitBill group by SplitToMat", "Splits", "count(*)"),
+                B("CRAMatter", "from CRARAlloc inner join CashReceipt on CRBatch = CRABatch and CRRecNbr = CRARecNbr", "CRPosted <> 'Y'", "PendingCash", "count(*)"),
+                B("CRFMatter", "from CRFeeAlloc inner join CashReceipt on CRBatch = CRFBatch and CRRecNbr = CRFRecNbr", "CRPosted <> 'Y'", "PendingCash", "count(*)"),
+                B("CREMatter", "from CRExpAlloc inner join CashReceipt on CRBatch = CREBatch and CRRecNbr = CRERecNbr", "CRPosted <> 'Y'", "PendingCash", "count(*)"),
+                B("CRPMatter", "from CRPPDAlloc inner join CashReceipt on CRBatch = CRPBatch and CRRecNbr = CRPRecNbr", "CRPosted <> 'Y'", "PendingCash", "count(*)"),
+                B("CRTMatter", "from CRTrustAlloc inner join CashReceipt on CRBatch = CRTBatch and CRRecNbr = CRTRecNbr", "CRPosted <> 'Y'", "PendingCash", "count(*)"),
+                B("TAMatter", "from TrustAccount", null, "Trust", "sum(TABalance)", "TrustBanks", "sum(case when TABalance <> 0 then 1 else 0 end)"),
+                B("TLMatter", "from (select TLMatter, sum(TLAmount) as Amt from TrustLedger where TLMatter in (select MatSysNbr from " + scope + ") group by TLMatter, TLBank) TL",
+                    null, "TrustLedger", "sum(Amt)", "TrustLedgerBanks", "sum(case when Amt <> 0 then 1 else 0 end)"),
+                B("TABDMatter", "from TrAdjBatchDetail", "TABDPosted <> 'Y'", "UnpostedTrustAdj", "count(*)"),
+                B("PBMMatter", "from PreBillMatter inner join PreBill on PBSysNbr = PBMPreBill", null, "Prebills", "count(*)"),
+                B("PBSTFromMatter", "from PreBillSplitTo inner join PreBill on PBSysNbr = PBSTPreBill", null, "Prebills", "count(*)"),
+                B("PBSTToMatter", "from PreBillSplitTo inner join PreBill on PBSysNbr = PBSTPreBill", null, "Prebills", "count(*)"),
+                B("SplitFromMat", "from SplitBill", null, "Splits", "count(*)"),
+                B("SplitToMat", "from SplitBill", null, "Splits", "count(*)"),
             });
 
             return "(select MatSys, " + string.Join(", ", Columns.Select(c => "sum(" + c + ") as " + c)) +
@@ -149,26 +155,39 @@ namespace Jps.Tools.Tools.MatterCloser
         /// so a matter that gained activity after the review is not closed. Closed and 'P' matters are never touched.
         /// Run it through <see cref="Close"/>, which locks the matter rows first.
         /// </summary>
-        public static string CloseSql(bool hasSuite, string candidateSubquery) =>
-            @"update Matter set MatStatusFlag = 'C', MatLockFlag = '3', MatDateClosed = cast(getdate() as date)
-where MatStatusFlag not in ('C', 'P')
-  and MatSysNbr in (" + candidateSubquery + @")
-  and MatSysNbr in (select B.MatSys from " + Balances(hasSuite) + " where not " + Unresolved + ")";
+        private const string CloseScope = "#JpsCloseScope";
 
         /// <summary>
-        /// Closes the candidate matters that pass the rules, in one transaction (joining an outer one). The candidate matter
-        /// rows are first locked (updlock, holdlock) so a Juris posting that is updating one of them (posting time, expenses
-        /// and bills updates the matter's last-activity dates) finishes first and its rows are seen by the re-check, and
-        /// nothing can change a candidate's status between the check and the update. <paramref name="parameters"/> is
-        /// called once per statement, because a SqlParameter can belong to only one command. Returns the number closed.
+        /// Closes the candidate matters (<paramref name="candidateSubquery"/>, a "select MatSysNbr ..." text) that still pass
+        /// the rules, in one transaction (joining an outer one). The open candidates are first copied to a scope table while
+        /// their Matter rows are locked (updlock, holdlock), so a Juris posting that is updating one of them (posting time,
+        /// expenses and bills updates the matter's last-activity dates) finishes first and its rows are seen by the re-check,
+        /// and nothing can change a candidate's status between the check and the update. Only those matters' balances are
+        /// read. Closed matters get status C, lock 3 "Disallow Time and Expense" and today's close date; closed and 'P'
+        /// matters are never touched. <paramref name="parameters"/> is called once per statement, because a SqlParameter
+        /// can belong to only one command. Returns the number closed.
         /// </summary>
         public static int Close(JurisSession session, string candidateSubquery, Func<SqlParameter[]> parameters) =>
             session.InTransaction(() =>
             {
-                session.Execute("declare @n int; select @n = count(*) from Matter with (updlock, holdlock) where MatStatusFlag not in ('C', 'P') and MatSysNbr in (" +
+                session.Execute(DropScope(CloseScope) + "create table " + CloseScope + " (MatSysNbr int primary key);\n" +
+                                "insert " + CloseScope + " select MatSysNbr from Matter with (updlock, holdlock) where MatStatusFlag not in ('C', 'P') and MatSysNbr in (" +
                                 candidateSubquery + ")", parameters());
-                return session.ExecuteRows(CloseSql(HasSuite(session), candidateSubquery), parameters());
+                try
+                {
+                    return session.ExecuteRows(
+                        @"update Matter set MatStatusFlag = 'C', MatLockFlag = '3', MatDateClosed = cast(getdate() as date)
+where MatStatusFlag not in ('C', 'P')
+  and MatSysNbr in (select B.MatSys from " + Balances(HasSuite(session), CloseScope) + " where not " + Unresolved + ")");
+                }
+                finally
+                {
+                    session.Execute(DropScope(CloseScope));
+                }
             });
+
+        /// <summary>SQL that drops a session temp table if it exists (left behind if an earlier statement failed).</summary>
+        public static string DropScope(string table) => "if object_id('tempdb.." + table + "') is not null drop table " + table + ";\n";
 
         /// <summary>
         /// The column headings reports show for the B columns (and WIP). Reports select B.X as [heading]; <see cref="Reasons"/>
@@ -257,8 +276,7 @@ where MatStatusFlag not in ('C', 'P')
             if (ids.Count == 0)
                 return result;
             var table = MatterIdTable.With(session, ids, () => session.Query(
-                "select B.MatSys, " + CheckColumns + ", case when " + Unresolved + " then 0 else 1 end as Ready from " + Balances(hasSuite) +
-                " inner join " + MatterIdTable.Name + " I on I.MatSysNbr = B.MatSys"));
+                "select B.MatSys, " + CheckColumns + ", case when " + Unresolved + " then 0 else 1 end as Ready from " + Balances(hasSuite, MatterIdTable.Name)));
             foreach (var row in table.Rows())
             {
                 var id = Convert.ToInt32(row["MatSys"], CultureInfo.InvariantCulture);

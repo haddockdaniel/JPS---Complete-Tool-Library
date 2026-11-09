@@ -17,15 +17,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
 
-  <!-- Archive Bill Bulk Print renders through Juris's server library and the ActiveReports 6 runtime the original tool shipped.
-       Not copied from here: Jps.Core already ships every lib\Juris DLL next to the exe. -->
-  <ItemGroup>
-    <Reference Include="JurisSVR21"><HintPath>$(JurisLib)JurisSVR21.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="JurisDBO21"><HintPath>$(JurisLib)JurisDBO21.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Gizmox.Extensions"><HintPath>$(JurisLib)Gizmox.Extensions.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="ActiveReports6"><HintPath>$(JurisLib)ActiveReports6.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="ActiveReports.Document"><HintPath>$(JurisLib)ActiveReports.Document.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="ActiveReports.PdfExport"><HintPath>$(JurisLib)ActiveReports.PdfExport.dll</HintPath><Private>false</Private></Reference>
-  </ItemGroup>
+  <!-- Archive Bill Bulk Print renders in a separate process, "JPS Bill Renderer.exe" (src\Jps.BillRenderer), through Juris's
+       own JurisWrapper.dll. Nothing Juris-rendering-related is loaded into the Tool Library itself. -->
 
 </Project>

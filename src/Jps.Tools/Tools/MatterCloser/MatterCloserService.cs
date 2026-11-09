@@ -104,8 +104,18 @@ left join (select MOrigMat,
                  from MatOrigAtty inner join Employee E2 on MOrigAtty = E2.EmpSysNbr) MO1
            group by MOrigMat) MO on Matter.MatSysNbr = MO.MOrigMat";
 
+        private const string Scope = "#JpsCriteriaScope";
+
+        // The open/final-billed matters that meet the criteria go into Scope first, so the balance checks read only those
+        // matters (not the whole firm). Wraps the report/count query in one batch that builds and drops Scope.
+        private static string Scoped(CloseCriteria criteria, List<SqlParameter> p, string query) =>
+            MatterCloseRules.DropScope(Scope) + "create table " + Scope + " (MatSysNbr int primary key);\n" +
+            "insert " + Scope + " select Matter.MatSysNbr " + CandidateFrom + "\n" + criteria.Where(p) + ";\n" +
+            query + ";\n" + MatterCloseRules.DropScope(Scope);
+
         private static string ReportFrom(bool hasSuite) =>
-            CandidateFrom + Originators + "\ninner join " + MatterCloseRules.Balances(hasSuite) + " on B.MatSys = Matter.MatSysNbr";
+            CandidateFrom + Originators + "\ninner join " + Scope + " S on S.MatSysNbr = Matter.MatSysNbr" +
+            "\ninner join " + MatterCloseRules.Balances(hasSuite, Scope) + " on B.MatSys = Matter.MatSysNbr";
 
         private static string LastDate(string col, string heading) =>
             "case when convert(varchar(10), Matter." + col + ", 101) = '01/01/1900' then 'Never' else convert(varchar(10), Matter." + col + ", 101) end as [" + heading + "]";
@@ -127,8 +137,8 @@ left join (select MOrigMat,
         {
             var hasSuite = MatterCloseRules.HasSuite(_session);
             var p = new List<SqlParameter>();
-            var sql = Columns + "\n" + ReportFrom(hasSuite) + "\n" + criteria.Where(p) + "\n  and " + (unresolved ? "" : "not ") +
-                      MatterCloseRules.Unresolved + "\norder by Client.CliCode, Matter.MatCode";
+            var sql = Scoped(criteria, p, Columns + "\n" + ReportFrom(hasSuite) + "\nwhere " + (unresolved ? "" : "not ") +
+                      MatterCloseRules.Unresolved + "\norder by Client.CliCode, Matter.MatCode");
             var table = _session.Query(sql, p.ToArray());
             if (unresolved)
             {
@@ -144,9 +154,9 @@ left join (select MOrigMat,
         {
             var hasSuite = MatterCloseRules.HasSuite(_session);
             var p = new List<SqlParameter>();
-            var row = _session.Query(
+            var row = _session.Query(Scoped(criteria, p,
                 "select count(*) as Matching, isnull(sum(case when " + MatterCloseRules.Unresolved + " then 1 else 0 end), 0) as Blocked\n" +
-                ReportFrom(hasSuite) + "\n" + criteria.Where(p), p.ToArray()).Rows[0];
+                "from " + MatterCloseRules.Balances(hasSuite, Scope)), p.ToArray()).Rows[0];
             return new CriteriaCounts
             {
                 Matching = Convert.ToInt32(row["Matching"], CultureInfo.InvariantCulture),

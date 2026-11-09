@@ -56,6 +56,34 @@
         <Setter Property="MinWidth" Value="150" />
     </Style>
 
+    <!-- Drop-downs: only draw the rows on screen (client lists can hold 30,000+ entries), and on long lists let people
+         type a code to jump straight to it (e.g. "2302" finds client 230296). Short option lists stay pick-only. -->
+    <c:GreaterThan x:Key="MoreThan50" Limit="50" />
+    <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+        <Setter Property="IsTextSearchEnabled" Value="True" />
+        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+        <!-- Without item-by-item scrolling the drop-down's panel can't virtualize, and WPF builds all 30,000+ rows on open. -->
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+        <Setter Property="c:ComboVirtualization.Enable" Value="True" />
+        <Setter Property="MaxDropDownHeight" Value="420" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Items.Count, RelativeSource={RelativeSource Self}, Converter={StaticResource MoreThan50}}" Value="True">
+                <Setter Property="IsEditable" Value="True" />
+                <!-- ComboVirtualization does the type-to-find on long lists (WPF's own is far too slow there). -->
+                <Setter Property="IsTextSearchEnabled" Value="False" />
+                <Setter Property="ToolTip" Value="Type a code to jump to it, or open the list" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
     <c:Visible x:Key="Visible" />
     <c:Invert x:Key="Invert" />
 </ResourceDictionary>

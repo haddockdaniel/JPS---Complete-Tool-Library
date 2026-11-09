@@ -41,7 +41,7 @@ namespace Jps.Tools.Tools.HideOldBatches
             var plan = new Plan { FolderOption = ReadFolderOption() };
 
             var periodEnds = new Dictionary<Tuple<int, int>, DateTime>();
-            foreach (var r in _session.Query("select PrdYear, PrdNbr, PrdEndDate from ActngPeriod").Rows())
+            foreach (var r in _session.Query("select PrdYear, PrdNbr, PrdEndDate from ActngPeriod where PrdNbr > 0").Rows())
                 periodEnds[Tuple.Create(Convert.ToInt32(r["PrdYear"]), Convert.ToInt32(r["PrdNbr"]))] = Convert.ToDateTime(r["PrdEndDate"]);
 
             var report = new DataTable();
@@ -154,6 +154,12 @@ namespace Jps.Tools.Tools.HideOldBatches
                 foreach (var pair in plan.LeavesByClass)
                 {
                     var periods = plan.PeriodsByClass[pair.Key];
+                    // Layout '1' (user folder → period folder): remember each period folder's user folder, so it can go too
+                    // once its last period folder is removed (the confirmation promises empty user folders are removed).
+                    var userFolders = plan.FolderOption == "1"
+                        ? _session.Query("select distinct DTParentID from DocumentTree where DTDocID in " + Sql.IdSelect("@ids") + " and DTParentID is not null",
+                                Sql.IdList("@ids", periods)).Rows().Select(r => Convert.ToInt32(r[0])).ToList()
+                        : new List<int>();
                     if (plan.FolderOption == "2")
                         folders += _session.ExecuteRows(
                             "delete u from DocumentTree u where u.DTDocClass = @cls and u.DTDocType = 'F' and " + BatchTree.NoChildren("u")
@@ -163,6 +169,13 @@ namespace Jps.Tools.Tools.HideOldBatches
                         "delete p from DocumentTree p where p.DTDocClass = @cls and p.DTDocType = 'F' and " + BatchTree.NoChildren("p")
                         + " and p.DTDocID in " + Sql.IdSelect("@ids"),
                         Sql.P("@cls", pair.Key), Sql.IdList("@ids", periods));
+                    if (userFolders.Count > 0)
+                        // Only real user folders: same class AND their parent is the class's own folder (never the class root).
+                        folders += _session.ExecuteRows(
+                            "delete u from DocumentTree u where u.DTDocClass = @cls and u.DTDocType = 'F' and " + BatchTree.NoChildren("u")
+                            + " and u.DTDocID in " + Sql.IdSelect("@ids")
+                            + " and exists (select 1 from DocumentTree root where root.DTDocID = u.DTParentID and root.DTDocClass = @cls)",
+                            Sql.P("@cls", pair.Key), Sql.IdList("@ids", userFolders));
                 }
 
                 if (leaves + folders > 0)

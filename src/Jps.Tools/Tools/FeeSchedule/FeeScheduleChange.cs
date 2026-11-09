@@ -63,7 +63,7 @@ namespace Jps.Tools.Tools.FeeSchedule
         public const string PracticeClassesSql = "select PrctClsCode, PrctClsCode as Code, PrctClsDesc from PracticeClass order by PrctClsCode";
         public const string OfficesSql = "select OfcOfficeCode, OfcOfficeCode as Code, OfcDesc from OfficeCode order by OfcOfficeCode";
         public const string ClientsSql =
-            "select CliSysNbr, dbo.jfn_FormatClientCode(CliCode), CliReportingName from Client order by dbo.jfn_FormatClientCode(CliCode)";
+            "select CliSysNbr, dbo.jfn_FormatClientCode(CliCode) as Code, CliReportingName from Client order by 2";
 
         public string StatusText => !ChangesMatters ? "" :
             Status == MatterStatusFilter.OpenOnly ? "Only open matters will be changed."

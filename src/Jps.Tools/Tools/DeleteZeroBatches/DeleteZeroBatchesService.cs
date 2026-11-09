@@ -90,11 +90,16 @@ namespace Jps.Tools.Tools.DeleteZeroBatches
                         + " insert @k (n) select distinct ids.Id from " + Sql.IdSelect("@ids") + " ids;"
                         + " declare @locked int;"
                         + " select @locked = b." + t.NumberColumn + " from " + t.Table + " b with (updlock, holdlock) where b." + t.NumberColumn + " in (select n from @k);"
+                        // Re-test "empty" under the lock with the hash-join hint (big unindexed reference tables), into @e.
+                        // The hint can't go on the DELETE itself: SQL Server can't build a plan for the DocumentTree delete
+                        // with it (error 8622, because of the table's self-referencing foreign key).
+                        + " declare @e table (n int primary key);"
+                        + " insert @e (n) select b." + t.NumberColumn + " from " + t.Table + " b where " + Empty(t, "b")
+                        + " and b." + t.NumberColumn + " in (select n from @k)" + HashJoins + ";"
                         + " set nocount off;"
                         + " delete dt from DocumentTree dt"
                         + " where dt.DTDocClass in (" + t.DocClassList + ") and dt.DTDocType = 'R' and " + BatchTree.NoChildren("dt")
-                        + " and dt.DTKeyL in (select b." + t.NumberColumn + " from " + t.Table + " b where " + Empty(t, "b")
-                        + " and b." + t.NumberColumn + " in (select n from @k))" + HashJoins + ";",
+                        + " and dt.DTKeyL in (select n from @e);",
                         Sql.IdList("@ids", pair.Value));
                     if (n > 0) done.Add(t.Label + " " + n);
                     total += n;

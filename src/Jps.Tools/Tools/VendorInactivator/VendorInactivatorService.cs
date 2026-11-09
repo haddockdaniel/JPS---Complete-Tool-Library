@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -32,7 +32,7 @@ namespace Jps.Tools.Tools.VendorInactivator
         public const string NoGroup = "NO GROUP";
 
         private const string VCols =
-            "[VenCode] as [Vendor Code], [VenName] as [Vendor Name], [VenAddress] as [Address], [VenCity] as [City], [VenState] as [State], [VenZip] as [Zip Code], [VenCountry] as [Country]";
+            "dbo.jfn_FormatVendorCode([VenCode]) as [Vendor Code], [VenName] as [Vendor Name], [VenAddress] as [Address], [VenCity] as [City], [VenState] as [State], [VenZip] as [Zip Code], [VenCountry] as [Country]";
 
         private const string Unpaid = "select VchVendor from Voucher where VchStatus <> 'P' and VchVendor is not null";
 

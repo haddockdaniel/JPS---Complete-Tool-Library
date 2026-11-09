@@ -232,6 +232,8 @@ namespace Jps.Tools.Tools.BillCopySettings
                     errors.Add("Client Code is required");
                 else if (clients.TryGetValue(row.ClientCode, out var id))
                     cliId = id;
+                else if (clients.Where(c => SameCode(c.Key, row.ClientCode)).Select(c => (int?)c.Value).ToList() is var near && near.Count == 1)
+                    cliId = near[0];   // e.g. "1234" typed for 001234: Excel drops leading zeros from numeric cells
                 else
                     errors.Add("No client with this Client Code was found in Juris");
 
@@ -240,7 +242,8 @@ namespace Jps.Tools.Tools.BillCopySettings
                 {
                     if (cliId != null)
                     {
-                        var matter = clientMatters.FirstOrDefault(m => string.Equals(m.Item1, row.MatterCode, StringComparison.OrdinalIgnoreCase));
+                        var matter = clientMatters.FirstOrDefault(m => string.Equals(m.Item1, row.MatterCode, StringComparison.OrdinalIgnoreCase))
+                                     ?? clientMatters.FirstOrDefault(m => SameCode(m.Item1, row.MatterCode));
                         if (matter == null)
                             errors.Add("This client has no matter with this Matter Code");
                         else if (matter.Item3)
@@ -412,6 +415,11 @@ namespace Jps.Tools.Tools.BillCopySettings
             }
             return rows;
         }
+
+        /// <summary>Numeric codes match without their leading zeros ("110" = "00110"), since Excel drops them.</summary>
+        private static bool SameCode(string juris, string typed) =>
+            juris.Length > 0 && typed.Length > 0 && juris.All(char.IsDigit) && typed.All(char.IsDigit)
+            && juris.TrimStart('0') == typed.TrimStart('0');
 
         private const int MaxConsecutiveBlankRows = 20;
         private static string Truncate(string text) => text.Length <= 7900 ? text : text.Substring(0, 7900) + "…";

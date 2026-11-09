@@ -12,6 +12,14 @@ namespace Jps.Tools.Common
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => !(value is bool b && b);
     }
 
+    /// <summary>A number → true when it is greater than <see cref="Limit"/>.</summary>
+    public sealed class GreaterThan : IValueConverter
+    {
+        public int Limit { get; set; }
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => value is int n && n > Limit;
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
+    }
+
     /// <summary>true → Visible, false → Collapsed; ConverterParameter=Invert flips it.</summary>
     public sealed class Visible : IValueConverter
     {

@@ -18,12 +18,11 @@
     <ProjectReference Include="..\Jps.Tools\Jps.Tools.csproj" />
   </ItemGroup>
 
-  <!-- ActiveReports 6 runtime license (Archive Bill Bulk Print, via Juris's JurisSVR21). .NET looks for a resource named
-       "<exe file name>.licenses" in the entry exe. This is the original tool's compiled licenses.licx (same keys, see
-       Licensing\licenses.licx) re-keyed to "JPS TOOL LIBRARY.EXE"; it must be regenerated if AssemblyName changes.
-       Embedded directly because LC.exe isn't available to dotnet build. -->
+  <!-- Archive Bill Bulk Print's renderer: a separate exe copied next to this one. It carries its own ActiveReports runtime
+       license (src\Jps.BillRenderer\JPS Bill Renderer.exe.licenses, the original tool's compiled licenses.licx re-keyed to
+       "JPS BILL RENDERER.EXE"; see Licensing\licenses.licx for the source entries). -->
   <ItemGroup>
-    <EmbeddedResource Include="Licensing\JPS Tool Library.exe.licenses" LogicalName="JPS Tool Library.exe.licenses" />
+    <ProjectReference Include="..\Jps.BillRenderer\Jps.BillRenderer.csproj" />
   </ItemGroup>
 
   <ItemGroup>

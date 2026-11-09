@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -38,6 +38,8 @@ namespace Jps.Tools.Tools.VoucherImport
         // Resolved from Juris during the checks.
         public int VendorSysNbr { get; set; }
         public string VendorCode { get; set; }
+        /// <summary>The vendor code as Juris shows it (formatted), for messages and reports.</summary>
+        public string VendorDisplay { get; set; }
         public string VendorName { get; set; }
         public int? VendorDiscAcct { get; set; }
         public int? VendorDefaultDistAcct { get; set; }

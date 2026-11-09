@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -28,7 +28,7 @@ namespace Jps.Tools.Tools.VoucherImport
 
         private sealed class VendorInfo
         {
-            public int SysNbr; public string Code; public string Name; public int? DiscAcct; public string DefaultAP; public int? DefaultDist; public bool NoVouchers;
+            public int SysNbr; public string Code; public string Display; public string Name; public int? DiscAcct; public string DefaultAP; public int? DefaultDist; public bool NoVouchers;
         }
 
         private sealed class MatterInfo
@@ -109,16 +109,17 @@ namespace Jps.Tools.Tools.VoucherImport
             {
                 var found = Vendor(v.VendorText);
                 if (found.Count == 0) err("No vendor with Vendor Code " + v.VendorText + " was found in Juris.");
-                else if (found.Count > 1) err("Vendor " + v.VendorText + " matches more than one Juris vendor (" + string.Join(", ", found.Select(f => f.Code)) + "). Use the exact vendor code.");
+                else if (found.Count > 1) err("Vendor " + v.VendorText + " matches more than one Juris vendor (" + string.Join(", ", found.Select(f => f.Display)) + "). Use the exact vendor code.");
                 else
                 {
                     vendor = found[0];
                     v.VendorSysNbr = vendor.SysNbr;
                     v.VendorCode = vendor.Code;
+                    v.VendorDisplay = vendor.Display;
                     v.VendorName = vendor.Name;
                     v.VendorDiscAcct = vendor.DiscAcct;
                     v.VendorDefaultDistAcct = vendor.DefaultDist;
-                    if (vendor.NoVouchers) err("Vendor " + vendor.Code + " is set in Juris to not accept new vouchers.");
+                    if (vendor.NoVouchers) err("Vendor " + vendor.Display + " is set in Juris to not accept new vouchers.");
                 }
             }
 
@@ -131,7 +132,7 @@ namespace Jps.Tools.Tools.VoucherImport
                 if (IsDuplicate(vendor.SysNbr, v.Invoice, v.InvoiceDate))
                 {
                     if (check.Mode == DuplicateMode.Reject)
-                        err("Invoice " + v.Invoice + " for vendor " + vendor.Code + " dated " + v.InvoiceDate.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture)
+                        err("Invoice " + v.Invoice + " for vendor " + vendor.Display + " dated " + v.InvoiceDate.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture)
                             + " already exists in Juris (as a voucher or in an unposted batch) and you chose to reject duplicate invoices.");
                     else
                     {
@@ -276,7 +277,7 @@ namespace Jps.Tools.Tools.VoucherImport
             {
                 if (v.VendorDefaultDistAcct == null)
                 {
-                    errors.Add(Tuple.Create(v.Row, "Vendor " + v.VendorCode + " has no default distribution account in Juris, which expense lines need."));
+                    errors.Add(Tuple.Create(v.Row, "Vendor " + v.VendorDisplay + " has no default distribution account in Juris, which expense lines need."));
                     return;
                 }
                 v.GlLines.Add(new GlLine { Row = 0, IsAutomatic = true, ChtSysNbr = v.VendorDefaultDistAcct.Value, Amount = expenses, AccountText = "(vendor's default distribution account)" });
@@ -308,12 +309,13 @@ namespace Jps.Tools.Tools.VoucherImport
             if (!_vendors.TryGetValue(key, out var list))
             {
                 list = _session.Query(
-                        @"select VenSysNbr, VenCode, VenName, VenDiscAcct, VenDefaultAPAcct, VenDefaultDistAcct, VenNoVouchers from Vendor
+                        @"select VenSysNbr, VenCode, dbo.jfn_FormatVendorCode(VenCode) as VenDisplay, VenName, VenDiscAcct, VenDefaultAPAcct, VenDefaultDistAcct, VenNoVouchers from Vendor
                           where right('000000000000' + VenCode, 12) = right('000000000000' + @ven, 12)", Sql.P("@ven", text)).Rows()
                     .Select(r => new VendorInfo
                     {
                         SysNbr = Convert.ToInt32(r["VenSysNbr"]),
                         Code = Sql.Text(r, "VenCode"),
+                        Display = Sql.Text(r, "VenDisplay"),
                         Name = Sql.Text(r, "VenName"),
                         DiscAcct = r["VenDiscAcct"] == DBNull.Value ? (int?)null : Convert.ToInt32(r["VenDiscAcct"]),
                         DefaultAP = r["VenDefaultAPAcct"] == DBNull.Value ? null : Sql.Text(r, "VenDefaultAPAcct"),
@@ -452,7 +454,7 @@ namespace Jps.Tools.Tools.VoucherImport
             t.Columns.Add("Note", typeof(string));
             var n = 0;
             foreach (var v in vouchers)
-                t.Rows.Add(++n, v.Row, v.Type == "T" ? "Trust" : "A/P", v.VendorCode, v.VendorName, v.Invoice, v.InvoiceDate, v.VoucherDate,
+                t.Rows.Add(++n, v.Row, v.Type == "T" ? "Trust" : "A/P", v.VendorDisplay, v.VendorName, v.Invoice, v.InvoiceDate, v.VoucherDate,
                     v.DueDate ?? v.InvoiceDate, v.InvoiceAmt, v.NonDiscAmt, v.Type == "T" ? "Trust Bank " + v.TrustBank + " (" + v.ClientText + "/" + v.MatterText + ")" : v.APAcct,
                     v.GlLines.Count, v.ExpenseLines.Count, v.Memo, string.Join(" ", v.Notes));
             return t;
@@ -482,10 +484,10 @@ namespace Jps.Tools.Tools.VoucherImport
             {
                 n++;
                 foreach (var g in v.GlLines)
-                    t.Rows.Add(n, g.Row == 0 ? (object)DBNull.Value : g.Row, v.VendorCode ?? v.VendorText, v.Invoice,
+                    t.Rows.Add(n, g.Row == 0 ? (object)DBNull.Value : g.Row, v.VendorDisplay ?? v.VendorText, v.Invoice,
                         g.IsAutomatic ? "GL line (added automatically for the expenses)" : "GL line", g.AccountText, null, null, null, null, null, DBNull.Value, g.Amount, null, null);
                 foreach (var e in v.ExpenseLines)
-                    t.Rows.Add(n, e.Row, v.VendorCode ?? v.VendorText, v.Invoice, "Expense line", null, e.ClientText, e.MatterText, e.ExpCode ?? e.ExpCodeText,
+                    t.Rows.Add(n, e.Row, v.VendorDisplay ?? v.VendorText, v.Invoice, "Expense line", null, e.ClientText, e.MatterText, e.ExpCode ?? e.ExpCodeText,
                         e.TaskCode ?? e.TaskText, e.IncurredBy ?? e.IncurredByText, e.Units, e.EffectiveAmount, e.Narrative, e.BillNote);
             }
             return t;
@@ -512,7 +514,7 @@ namespace Jps.Tools.Tools.VoucherImport
                 foreach (var v in vouchers)
                 {
                     if (IsDuplicate(v.VendorSysNbr, v.Invoice, v.InvoiceDate))
-                        throw new InvalidOperationException("Invoice " + v.Invoice + " for vendor " + v.VendorCode + " was added to Juris after the file was checked. "
+                        throw new InvalidOperationException("Invoice " + v.Invoice + " for vendor " + v.VendorDisplay + " was added to Juris after the file was checked. "
                             + "No batch was created. Check the file again.");
                     if (v.Type == "T")
                     {
