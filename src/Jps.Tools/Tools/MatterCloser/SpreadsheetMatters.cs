@@ -64,6 +64,40 @@ namespace Jps.Tools.Tools.MatterCloser
 
         public string PadClient(string code) => ClientNumeric && ClientLength > 0 ? code.PadLeft(ClientLength, '0') : code;
         public string PadMatter(string code) => MatterNumeric && MatterLength > 0 ? code.PadLeft(MatterLength, '0') : code;
+
+        /// <summary>Juris stores a numeric (N) code as 12 digits, zero-filled on the left; a character (C) code as typed.</summary>
+        public const int StoredNumericLength = 12;
+
+        /// <summary>
+        /// Checks a matter code for a NEW matter against the firm's format (SysParam FldMatter): a numeric format needs
+        /// digits only, at most the format's length; a character format at most the format's length, no spaces. Returns why it can't be used, or null with the code as Juris stores it and as it is shown.
+        /// </summary>
+        public string CheckNewMatterCode(string code, out string stored, out string shown)
+        {
+            stored = shown = null;
+            code = (code ?? "").Trim();
+            if (code.Length == 0) return "the matter code is blank.";
+            if (MatterLength <= 0) return "the firm's matter code format (SysParam FldMatter) couldn't be read.";
+            if (MatterNumeric)
+            {
+                if (!code.All(ch => ch >= '0' && ch <= '9'))
+                    return "\"" + code + "\" isn't a number, and this firm's matter codes are numeric.";
+                var digits = code.TrimStart('0');
+                if (digits.Length == 0) return "a matter code can't be zero.";
+                if (digits.Length > MatterLength)
+                    return "\"" + code + "\" is longer than this firm's " + MatterLength + "-digit matter codes.";
+                stored = digits.PadLeft(StoredNumericLength, '0');
+                shown = digits.PadLeft(MatterLength, '0');
+                return null;
+            }
+            if (code.Length > MatterLength)
+                return "\"" + code + "\" is longer than this firm's " + MatterLength + "-character matter codes.";
+            // Juris's code box takes upper-case letters, digits and punctuation, no spaces; its server stores UCase(Trim(code)).
+            if (code.Any(ch => char.IsWhiteSpace(ch) || ch > 126))
+                return "\"" + code + "\" has spaces or characters Juris doesn't allow in a matter code.";
+            stored = shown = code.ToUpperInvariant();
+            return null;
+        }
     }
 
     /// <summary>

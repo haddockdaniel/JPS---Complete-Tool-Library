@@ -1,0 +1,88 @@
+<UserControl x:Class="Jps.Tools.Tools.SplitManagement.SplitManagementView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:c="clr-namespace:Jps.Tools.Common">
+    <c:ToolFrame x:Name="Frame">
+        <StackPanel>
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="1  Choose the matters to change" />
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Client" />
+                    <ComboBox x:Name="ClientBox" MaxWidth="520" MinWidth="360" HorizontalAlignment="Left"
+                              DisplayMemberPath="Display" TextSearch.TextPath="Display" SelectionChanged="OnClientChanged" />
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Matter" Margin="0,12,0,6" />
+                    <ComboBox x:Name="MatterBox" MaxWidth="520" MinWidth="360" HorizontalAlignment="Left"
+                              DisplayMemberPath="Display" TextSearch.TextPath="Display" SelectionChanged="OnMatterChanged" />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="Only open matters that aren't locked against time and expenses are listed. &quot;All matters&quot; changes every one of them for this client." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="2  Choose what to do" />
+                    <RadioButton x:Name="ModeUpdate" GroupName="Mode" Content="Create or update the splits" IsChecked="True"
+                                 Checked="OnModeChanged" Margin="0,0,0,4" />
+                    <RadioButton x:Name="ModeCopy" GroupName="Mode" Content="Copy the splits from another matter" Checked="OnModeChanged" />
+
+                    <StackPanel x:Name="CopyPanel" Visibility="Collapsed" Margin="0,12,0,0">
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="Copy from client" />
+                        <ComboBox x:Name="SourceClientBox" MaxWidth="520" MinWidth="360" HorizontalAlignment="Left"
+                                  DisplayMemberPath="Display" TextSearch.TextPath="Display" SelectionChanged="OnSourceClientChanged" />
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="Copy from matter" Margin="0,12,0,6" />
+                        <ComboBox x:Name="SourceMatterBox" MaxWidth="520" MinWidth="360" HorizontalAlignment="Left"
+                                  DisplayMemberPath="Display" TextSearch.TextPath="Display" SelectionChanged="OnSourceMatterChanged" />
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="Its splits" Margin="0,12,0,6" />
+                        <DataGrid x:Name="SourceGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                                  CanUserAddRows="False" MaxHeight="200" MaxWidth="900" HorizontalAlignment="Left">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Client" Binding="{Binding ClientCode}" />
+                                <DataGridTextColumn Header="Client Name" Binding="{Binding ClientName}" />
+                                <DataGridTextColumn Header="Matter" Binding="{Binding MatterCode}" />
+                                <DataGridTextColumn Header="Matter Name" Binding="{Binding MatterName}" />
+                                <DataGridTextColumn Header="Split %" Binding="{Binding Percent, StringFormat=0.00##}" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Only clients with an open matter that has splits are listed. The copied splits fill the table below; review them there." />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ToolCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource ToolCardTitle}" Text="3  The splits" />
+                    <DataGrid x:Name="SplitGrid" AutoGenerateColumns="False" HeadersVisibility="Column" CanUserAddRows="False"
+                              CanUserDeleteRows="False" MinHeight="120" MaxHeight="360" MaxWidth="900" HorizontalAlignment="Left"
+                              CellEditEnding="OnCellEditEnding" SelectionMode="Single">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn x:Name="ClientColumn" Header="Split to client" Binding="{Binding ClientCode, UpdateSourceTrigger=PropertyChanged}" MinWidth="120" />
+                            <DataGridTextColumn Header="Client Name" Binding="{Binding ClientName}" IsReadOnly="True" />
+                            <DataGridTextColumn x:Name="MatterColumn" Header="Split to matter" Binding="{Binding MatterCode, UpdateSourceTrigger=PropertyChanged}" MinWidth="120" />
+                            <DataGridTextColumn Header="Matter Name" Binding="{Binding MatterName}" IsReadOnly="True" />
+                            <DataGridTextColumn x:Name="PercentColumn" Header="Split %" Binding="{Binding Percent, StringFormat=0.00##, UpdateSourceTrigger=LostFocus}" MinWidth="80" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <ui:Button x:Name="AddRowButton" Content="Add a split" Icon="{ui:SymbolIcon Add24}" Click="OnAddRow" Margin="0,0,8,0" />
+                        <ui:Button x:Name="RemoveRowButton" Content="Remove selected split" Icon="{ui:SymbolIcon Delete24}" Click="OnRemoveRow" />
+                        <TextBlock x:Name="TotalText" VerticalAlignment="Center" Margin="24,0,0,0" FontWeight="SemiBold" />
+                    </StackPanel>
+                    <TextBlock x:Name="TokenHint" Style="{StaticResource Hint}" Visibility="Collapsed"
+                               Text="With all matters (or a copy), XXXX stands for each matter's own matter code: XXXX on this client means the matter keeps that share itself; a client code followed by XXXX (e.g. 1234XXXX) means the matter whose code is that client code plus the matter's code, in the split-to client." />
+                    <TextBlock Style="{StaticResource Hint}"
+                               Text="The percentages must add up to exactly 100. Set them all to 0 (or remove every split) to stop the matters splitting. A split-to matter that doesn't exist yet is created as a copy of the matter being split, with its own bill-to, bill copies and originating timekeepers." />
+                    <CheckBox x:Name="LockCheck" Content="Lock the split-to matters against time and expenses" Margin="0,12,0,0" />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Style="{StaticResource ActionBar}">
+                <ui:Button x:Name="UpdateButton" DockPanel.Dock="Right" Appearance="Primary" IsEnabled="False"
+                           Content="Review and update splits" Icon="{ui:SymbolIcon BranchFork24}" Click="OnUpdate" />
+                <ui:Button x:Name="Not100Button" DockPanel.Dock="Left"
+                           Content="Splits not totalling 100%" Icon="{ui:SymbolIcon DocumentTable24}" Click="OnNot100" />
+            </DockPanel>
+        </StackPanel>
+    </c:ToolFrame>
+</UserControl>
